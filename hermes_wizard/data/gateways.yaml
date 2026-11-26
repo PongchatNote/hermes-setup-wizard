@@ -1,0 +1,562 @@
+# Messaging platforms Hermes documents, with the env vars those pages name.
+# Full click-path guidance is included for Telegram, Discord, LINE, and Slack.
+# Other rows still save the documented credentials and link to the docs.
+# https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+
+gateways:
+  - id: telegram
+    title_en: Telegram
+    title_th: Telegram
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram
+    enabled_key: platforms.telegram.enabled
+    test: telegram
+    token_key: TELEGRAM_BOT_TOKEN
+    steps_en: |
+      1. In Telegram, open a chat with @BotFather.
+      2. Send /newbot and follow the prompts. The username must end in "bot".
+      3. BotFather replies with an HTTP API token. Paste that into TELEGRAM_BOT_TOKEN. It looks like 123456789:AA....
+      4. Your numeric user id is not your @username. Message @userinfobot (or @get_id_bot). Paste the number into TELEGRAM_ALLOWED_USERS. Several people are comma-separated.
+      5. Save. The wizard writes the token to ~/.hermes/.env (mode 0600) and the OS keyring, and sets platforms.telegram.enabled when you tick the box.
+      6. Press Test connection. It calls Telegram getMe and shows the bot username only.
+      7. Install and start the gateway from the Install page (hermes gateway install, then hermes gateway start). Send the bot a message.
+      The desktop app and dashboard also offer a Create with QR button that writes the same two variables. hermes gateway setup is the terminal wizard for the same fields.
+    steps_th: |
+      1. ใน Telegram เปิดแชทกับ @BotFather
+      2. ส่ง /newbot แล้วทำตามคำถาม ชื่อผู้ใช้ต้องลงท้ายด้วย bot
+      3. BotFather ส่งโทเคน HTTP API กลับมา วางใน TELEGRAM_BOT_TOKEN รูปแบบคล้าย 123456789:AA....
+      4. รหัสผู้ใช้เป็นตัวเลข ไม่ใช่ชื่อ @  ส่งข้อความหา @userinfobot (หรือ @get_id_bot) แล้วนำตัวเลขไปใส่ TELEGRAM_ALLOWED_USERS หลายคนคั่นด้วยจุลภาค
+      5. กดบันทึก ตัวช่วยเขียนโทเคนลง ~/.hermes/.env (สิทธิ์ 0600) และพวงกุญแจของระบบ และตั้ง platforms.telegram.enabled เมื่อติ๊กช่องเปิดใช้
+      6. กดทดสอบการเชื่อมต่อ มันเรียก getMe ของ Telegram แล้วแสดงชื่อบอทเท่านั้น
+      7. ที่หน้าติดตั้ง ให้ติดตั้งแล้วเริ่มเกตเวย์ (hermes gateway install แล้ว hermes gateway start) จากนั้นส่งข้อความหาบอท
+      แอปเดสก์ท็อปและแดชบอร์ดมีปุ่ม Create with QR ที่เขียนสองตัวแปรเดียวกัน hermes gateway setup คือตัวช่วยในเทอร์มินัลสำหรับช่องเดียวกัน
+    fields:
+      - key: TELEGRAM_BOT_TOKEN
+        secret: true
+        title_en: Bot token from BotFather
+        title_th: โทเคนบอทจาก BotFather
+        help_en: Telegram bot token. Hermes reads TELEGRAM_BOT_TOKEN from ~/.hermes/.env.
+        help_th: โทเคนบอท Telegram Hermes อ่าน TELEGRAM_BOT_TOKEN จาก ~/.hermes/.env
+      - key: TELEGRAM_ALLOWED_USERS
+        secret: false
+        title_en: Allowed numeric user ids
+        title_th: รหัสผู้ใช้ตัวเลขที่อนุญาต
+        help_en: Comma-separated numeric Telegram user ids allowed to talk to the bot in DMs, groups, and forums. Unknown users are denied unless you approve a DM pairing code with hermes pairing approve telegram.
+        help_th: รหัสผู้ใช้ Telegram แบบตัวเลข คั่นด้วยจุลภาค ใช้ได้ทั้งข้อความส่วนตัว กลุ่ม และฟอรัม คนที่ไม่อยู่ในรายการถูกปฏิเสธ เว้นแต่จะอนุมัติรหัสจับคู่ด้วย hermes pairing approve telegram
+      - key: TELEGRAM_HOME_CHANNEL
+        secret: false
+        title_en: Home channel for cron
+        title_th: ช่องหลักสำหรับงานตามเวลา
+        help_en: Optional default Telegram chat id for cron delivery.
+        help_th: ไม่บังคับ รหัสแชท Telegram เริ่มต้นสำหรับส่งงาน cron
+
+  - id: discord
+    title_en: Discord
+    title_th: Discord
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord
+    enabled_key: platforms.discord.enabled
+    test: discord
+    token_key: DISCORD_BOT_TOKEN
+    steps_en: |
+      1. Open the Discord Developer Portal and create a New Application.
+      2. Open Bot. Leave Require OAuth2 Code Grant off. Public Bot must be on if you want Discord's own invite link.
+      3. Under Privileged Gateway Intents, turn on Message Content Intent and Server Members Intent, then Save Changes. Without Message Content Intent, Discord refuses the connection and the bot stays offline.
+      4. On the Bot page, Reset Token and copy it once into DISCORD_BOT_TOKEN.
+      5. Invite the bot with scopes bot and applications.commands. The docs' recommended permission integer is 309237763136. The full integer that hermes gateway setup prints (adds voice Connect and Speak) is 309240908864. Minimal is 117760.
+         Manual URL shape: https://discord.com/oauth2/authorize?client_id=YOUR_APP_ID&scope=bot+applications.commands&permissions=309237763136
+      6. Put your Discord user id in DISCORD_ALLOWED_USERS. Developer Mode in the Discord app shows Copy User ID.
+      7. Save, test the token, then start the gateway. The test only checks the REST token. A REST success does not prove Message Content Intent is on.
+      hermes gateway setup can check the token, warn about the intent, print an invite link, and allowlist you.
+    steps_th: |
+      1. เปิด Discord Developer Portal แล้วสร้าง New Application
+      2. เปิดหน้า Bot ปิด Require OAuth2 Code Grant ถ้าจะใช้ลิงก์เชิญของ Discord ต้องเปิด Public Bot
+      3. ที่ Privileged Gateway Intents เปิด Message Content Intent และ Server Members Intent แล้วกด Save Changes ถ้าไม่เปิด Message Content Intent Discord จะปฏิเสธการเชื่อมต่อ และบอทไม่ออนไลน์
+      4. ที่หน้า Bot กด Reset Token แล้วคัดลอกครั้งเดียวใส่ DISCORD_BOT_TOKEN
+      5. เชิญบอทด้วยสโคป bot และ applications.commands ตัวเลขสิทธิ์ที่เอกสารแนะนำคือ 309237763136 ตัวเลขเต็มที่ hermes gateway setup พิมพ์ (เพิ่ม Connect และ Speak สำหรับเสียง) คือ 309240908864 ค่าต่ำสุดคือ 117760
+         รูปแบบ URL: https://discord.com/oauth2/authorize?client_id=YOUR_APP_ID&scope=bot+applications.commands&permissions=309237763136
+      6. ใส่รหัสผู้ใช้ Discord ใน DISCORD_ALLOWED_USERS เปิด Developer Mode ในแอป Discord แล้วใช้ Copy User ID
+      7. บันทึก ทดสอบโทเคน แล้วเริ่มเกตเวย์ การทดสอบตรวจเฉพาะโทเคน REST ความสำเร็จของ REST ไม่ได้พิสูจน์ว่าเปิด Message Content Intent แล้ว
+      hermes gateway setup ตรวจโทเคน เตือนเรื่อง intent พิมพ์ลิงก์เชิญ และใส่คุณในรายการอนุญาตได้
+    fields:
+      - key: DISCORD_BOT_TOKEN
+        secret: true
+        title_en: Bot token
+        title_th: โทเคนบอท
+        help_en: Discord bot token from the Bot page. Stored as DISCORD_BOT_TOKEN.
+        help_th: โทเคนบอท Discord จากหน้า Bot เก็บเป็น DISCORD_BOT_TOKEN
+      - key: DISCORD_ALLOWED_USERS
+        secret: false
+        title_en: Allowed user ids
+        title_th: รหัสผู้ใช้ที่อนุญาต
+        help_en: Comma-separated Discord user ids. Role ids can be added later as DISCORD_ALLOWED_ROLES.
+        help_th: รหัสผู้ใช้ Discord คั่นด้วยจุลภาค รหัสบทบาทใส่ทีหลังได้ใน DISCORD_ALLOWED_ROLES
+      - key: DISCORD_REQUIRE_MENTION
+        secret: false
+        storage: env
+        title_en: Require an @mention in servers
+        title_th: ต้องถูก @ ถึงจะตอบในเซิร์ฟเวอร์
+        placeholder: "true"
+        help_en: Env fallback for requiring an @mention in server channels. DMs still answer without a mention. The config.yaml key discord.require_mention is on the Discord settings group.
+        help_th: ตัวแปรที่บังคับให้ถูก @ ในช่องของเซิร์ฟเวอร์ ข้อความส่วนตัวยังตอบได้โดยไม่ต้องถูกกล่าวถึง คีย์ discord.require_mention ใน config.yaml อยู่ที่กลุ่มการตั้งค่า Discord
+
+  - id: line
+    title_en: LINE
+    title_th: LINE
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line
+    banner_en: >
+      Hermes includes LINE. The adapter ships in the repo at
+      plugins/platforms/line/ and uses the official LINE Messaging API. This is
+      not a QR login of your personal LINE account, and it is not an unofficial
+      bridge. You create a Messaging API channel, paste the channel access token
+      and channel secret, and set an allowlist.
+    banner_th: >
+      Hermes มี LINE ในตัว ตัวรับส่งอยู่ในที่เก็บโค้ดที่ plugins/platforms/line/
+      และใช้ LINE Messaging API อย่างเป็นทางการ นี่ไม่ใช่การล็อกอินด้วย QR
+      ของบัญชี LINE ส่วนตัว และไม่ใช่สะพานนอกเอกสาร คุณสร้างช่อง Messaging API
+      วางโทเคนช่องกับความลับช่อง แล้วตั้งรายการอนุญาต
+    enabled_key: platforms.line.enabled
+    test: line
+    token_key: LINE_CHANNEL_ACCESS_TOKEN
+    steps_en: |
+      LINE is a bundled platform plugin (plugins/platforms/line/). It uses the LINE Messaging API, not a phone-number login.
+      1. Open the LINE Developers Console. Create a Provider, then a Messaging API channel.
+      2. On Basic settings, copy the Channel secret into LINE_CHANNEL_SECRET.
+      3. On the Messaging API tab, issue a long-lived channel access token and paste it into LINE_CHANNEL_ACCESS_TOKEN.
+      4. On that same tab, disable auto-reply messages and greeting messages so they do not answer instead of Hermes.
+      5. Put at least one allowlist in LINE_ALLOWED_USERS (U… ids), LINE_ALLOWED_GROUPS (C… ids), or LINE_ALLOWED_ROOMS (R… ids). LINE_ALLOW_ALL_USERS=true is the documented dev-only escape hatch.
+      6. LINE_PUBLIC_URL is the public https base URL of this machine (a tunnel is fine). Image, audio, and video sends need it because LINE only fetches HTTPS URLs.
+      7. Tick Enable, save, and test. The test calls https://api.line.me/v2/bot/info with the access token.
+      8. In config, platforms.line.enabled must be true. The webhook listens on LINE_PORT (default 8646). Point the channel webhook at that public URL, then start the gateway.
+    steps_th: |
+      LINE เป็นปลั๊กอินแพลตฟอร์มที่มากับ Hermes (plugins/platforms/line/) ใช้ LINE Messaging API ไม่ใช่การล็อกอินด้วยเบอร์โทร
+      1. เปิด LINE Developers Console สร้าง Provider แล้วสร้างช่อง Messaging API
+      2. ที่แท็บ Basic settings คัดลอก Channel secret ใส่ LINE_CHANNEL_SECRET
+      3. ที่แท็บ Messaging API กดออกโทเคนแบบยาว (long-lived) แล้ววางใน LINE_CHANNEL_ACCESS_TOKEN
+      4. ที่แท็บเดียวกัน ปิดข้อความตอบอัตโนมัติและข้อความทักทาย ไม่งั้นมันจะตอบแทน Hermes
+      5. ใส่รายการอนุญาตอย่างน้อยหนึ่งช่อง คือ LINE_ALLOWED_USERS (รหัสขึ้นต้น U), LINE_ALLOWED_GROUPS (ขึ้นต้น C) หรือ LINE_ALLOWED_ROOMS (ขึ้นต้น R) ค่า LINE_ALLOW_ALL_USERS=true เป็นช่องทางสำหรับทดลองที่เอกสารระบุว่าใช้ตอนพัฒนาเท่านั้น
+      6. LINE_PUBLIC_URL คือที่อยู่ https สาธารณะของเครื่องนี้ (อุโมงค์ก็ได้) การส่งรูป เสียง และวิดีโอต้องมีค่านี้ เพราะ LINE ดึงเฉพาะ URL แบบ HTTPS
+      7. ติ๊กเปิดใช้ บันทึก แล้วทดสอบ การทดสอบเรียก https://api.line.me/v2/bot/info ด้วยโทเคน
+      8. ในคอนฟิก platforms.line.enabled ต้องเป็น true เว็บฮุกรับที่ LINE_PORT (ค่าเริ่มต้น 8646) ชี้เว็บฮุกของช่องไปที่ URL สาธารณะนั้น แล้วเริ่มเกตเวย์
+    fields:
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        secret: true
+        title_en: Channel access token
+        title_th: โทเคนเข้าถึงช่อง
+        help_en: Long-lived channel access token from the Messaging API tab. Required.
+        help_th: โทเคนแบบยาวจากแท็บ Messaging API จำเป็นต้องมี
+      - key: LINE_CHANNEL_SECRET
+        secret: true
+        title_en: Channel secret
+        title_th: ความลับของช่อง
+        help_en: Channel secret from Basic settings. Hermes uses it to verify webhook signatures (HMAC-SHA256). Required.
+        help_th: Channel secret จาก Basic settings Hermes ใช้ตรวจลายเซ็นเว็บฮุก (HMAC-SHA256) จำเป็นต้องมี
+      - key: LINE_ALLOWED_USERS
+        secret: false
+        title_en: Allowed user ids
+        title_th: รหัสผู้ใช้ที่อนุญาต
+        help_en: Comma-separated U-prefixed LINE user ids allowed to DM the bot.
+        help_th: รหัสผู้ใช้ LINE ที่ขึ้นต้นด้วย U คั่นด้วยจุลภาค สำหรับข้อความส่วนตัว
+      - key: LINE_ALLOWED_GROUPS
+        secret: false
+        title_en: Allowed group ids
+        title_th: รหัสกลุ่มที่อนุญาต
+        help_en: Optional comma-separated C-prefixed group ids.
+        help_th: ไม่บังคับ รหัสกลุ่มที่ขึ้นต้นด้วย C คั่นด้วยจุลภาค
+      - key: LINE_PUBLIC_URL
+        secret: false
+        title_en: Public HTTPS URL
+        title_th: URL แบบ HTTPS ที่เข้าจากภายนอกได้
+        placeholder: https://example.example.com
+        help_en: Public HTTPS base URL. Required for image, audio, and video sends.
+        help_th: ที่อยู่ฐานแบบ HTTPS ที่คนนอกเข้าได้ จำเป็นเมื่อจะส่งรูป เสียง หรือวิดีโอ
+      - key: LINE_PORT
+        secret: false
+        title_en: Webhook port
+        title_th: พอร์ตเว็บฮุก
+        placeholder: "8646"
+        help_en: Webhook bind port. Default 8646.
+        help_th: พอร์ตที่เว็บฮุกรับฟัง ค่าเริ่มต้น 8646
+
+  - id: slack
+    title_en: Slack
+    title_th: Slack
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.slack.enabled
+    test: slack
+    token_key: SLACK_BOT_TOKEN
+    steps_en: |
+      Hermes talks to Slack in Socket Mode. The environment reference requires two tokens.
+      1. Create a Slack app in your workspace and enable Socket Mode.
+      2. Install the app and copy the Bot User OAuth Token (starts with xoxb-) into SLACK_BOT_TOKEN.
+      3. Create an app-level token for Socket Mode (starts with xapp-) and paste it into SLACK_APP_TOKEN.
+      4. Put your Slack member id in SLACK_ALLOWED_USERS.
+      5. Save, test, and start the gateway. The test calls Slack auth.test with the bot token.
+      Full platform behavior is in the messaging guide. hermes gateway setup walks the same tokens in the terminal.
+    steps_th: |
+      Hermes คุยกับ Slack แบบ Socket Mode เอกสารตัวแปรสภาพแวดล้อมต้องมีสองโทเคน
+      1. สร้างแอป Slack ในเวิร์กสเปซแล้วเปิด Socket Mode
+      2. ติดตั้งแอป แล้วคัดลอก Bot User OAuth Token (ขึ้นต้นด้วย xoxb-) ใส่ SLACK_BOT_TOKEN
+      3. สร้าง app-level token สำหรับ Socket Mode (ขึ้นต้นด้วย xapp-) ใส่ SLACK_APP_TOKEN
+      4. ใส่รหัสสมาชิก Slack ใน SLACK_ALLOWED_USERS
+      5. บันทึก ทดสอบ แล้วเริ่มเกตเวย์ การทดสอบเรียก Slack auth.test ด้วยโทเคนบอท
+      พฤติกรรมของแพลตฟอร์มอยู่ในคู่มือข้อความ hermes gateway setup ถามโทเคนชุดเดียวกันในเทอร์มินัล
+    fields:
+      - key: SLACK_BOT_TOKEN
+        secret: true
+        title_en: Bot token (xoxb-)
+        title_th: โทเคนบอท (xoxb-)
+        help_en: Slack bot token, xoxb-....
+        help_th: โทเคนบอท Slack ขึ้นต้น xoxb-
+      - key: SLACK_APP_TOKEN
+        secret: true
+        title_en: App-level token (xapp-)
+        title_th: โทเคนระดับแอป (xapp-)
+        help_en: App-level token, xapp-..., required for Socket Mode.
+        help_th: โทเคนระดับแอป ขึ้นต้น xapp- จำเป็นสำหรับ Socket Mode
+      - key: SLACK_ALLOWED_USERS
+        secret: false
+        title_en: Allowed member ids
+        title_th: รหัสสมาชิกที่อนุญาต
+        help_en: Comma-separated Slack user ids.
+        help_th: รหัสผู้ใช้ Slack คั่นด้วยจุลภาค
+
+  - id: signal
+    title_en: Signal
+    title_th: Signal
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.signal.enabled
+    test: none
+    steps_en: |
+      Signal uses a signal-cli daemon. Set SIGNAL_HTTP_URL (for example http://127.0.0.1:8080), SIGNAL_ACCOUNT to the bot number in E.164 form, and SIGNAL_ALLOWED_USERS to comma-separated E.164 numbers or UUIDs. There is no paste-a-token test in this wizard; after saving, use hermes gateway status.
+    steps_th: |
+      Signal ใช้ดีมอน signal-cli ตั้ง SIGNAL_HTTP_URL (เช่น http://127.0.0.1:8080) SIGNAL_ACCOUNT เป็นเบอร์บอทแบบ E.164 และ SIGNAL_ALLOWED_USERS เป็นเบอร์ E.164 หรือ UUID คั่นด้วยจุลภาค ตัวช่วยนี้ไม่มีปุ่มทดสอบแบบวางโทเคน หลังบันทึกให้ดู hermes gateway status
+    fields:
+      - key: SIGNAL_HTTP_URL
+        secret: false
+        title_en: signal-cli HTTP URL
+        title_th: URL ของ signal-cli
+        placeholder: http://127.0.0.1:8080
+        help_en: HTTP endpoint of the signal-cli daemon.
+        help_th: ปลายทาง HTTP ของดีมอน signal-cli
+      - key: SIGNAL_ACCOUNT
+        secret: false
+        title_en: Bot phone number
+        title_th: เบอร์โทรของบอท
+        help_en: Bot phone number in E.164 format.
+        help_th: เบอร์บอทในรูปแบบ E.164
+      - key: SIGNAL_ALLOWED_USERS
+        secret: false
+        title_en: Allowed numbers
+        title_th: เบอร์ที่อนุญาต
+        help_en: Comma-separated E.164 numbers or UUIDs.
+        help_th: เบอร์ E.164 หรือ UUID คั่นด้วยจุลภาค
+
+  - id: matrix
+    title_en: Matrix
+    title_th: Matrix
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.matrix.enabled
+    test: none
+    token_key: MATRIX_ACCESS_TOKEN
+    steps_en: |
+      Set MATRIX_HOMESERVER (for example https://matrix.org) and either MATRIX_ACCESS_TOKEN or MATRIX_USER_ID plus MATRIX_PASSWORD. MATRIX_ALLOWED_USERS takes Matrix ids such as @alice:matrix.org. Save, then start the gateway. See the messaging guide for encryption keys; this page only stores the documented login values.
+    steps_th: |
+      ตั้ง MATRIX_HOMESERVER (เช่น https://matrix.org) และใส่ MATRIX_ACCESS_TOKEN หรือใส่ทั้ง MATRIX_USER_ID กับ MATRIX_PASSWORD MATRIX_ALLOWED_USERS รับรหัสแบบ @alice:matrix.org บันทึกแล้วเริ่มเกตเวย์ คู่มือข้อความอธิบายคีย์เข้ารหัส หน้านี้เก็บเฉพาะค่าล็อกอินที่เอกสารระบุ
+    fields:
+      - key: MATRIX_HOMESERVER
+        secret: false
+        title_en: Homeserver URL
+        title_th: URL ของโฮมเซิร์ฟเวอร์
+        placeholder: https://matrix.org
+        help_en: Matrix homeserver URL.
+        help_th: ที่อยู่โฮมเซิร์ฟเวอร์ Matrix
+      - key: MATRIX_ACCESS_TOKEN
+        secret: true
+        title_en: Access token
+        title_th: โทเคนเข้าถึง
+        help_en: Matrix access token. Optional if you use a password login instead.
+        help_th: โทเคนเข้าถึง Matrix ไม่บังคับถ้าใช้การล็อกอินด้วยรหัสผ่าน
+      - key: MATRIX_USER_ID
+        secret: false
+        title_en: User id
+        title_th: รหัสผู้ใช้
+        placeholder: "@bot:matrix.org"
+        help_en: Matrix user id. Required for password login, optional when an access token is set.
+        help_th: รหัสผู้ใช้ Matrix จำเป็นเมื่อล็อกอินด้วยรหัสผ่าน ไม่บังคับเมื่อมีโทเคน
+      - key: MATRIX_PASSWORD
+        secret: true
+        title_en: Password
+        title_th: รหัสผ่าน
+        help_en: Matrix password. Alternative to the access token.
+        help_th: รหัสผ่าน Matrix ใช้แทนโทเคนเข้าถึง
+      - key: MATRIX_ALLOWED_USERS
+        secret: false
+        title_en: Allowed user ids
+        title_th: รหัสผู้ใช้ที่อนุญาต
+        help_en: Comma-separated Matrix ids allowed to message the bot.
+        help_th: รหัส Matrix ที่ส่งข้อความหาบอทได้ คั่นด้วยจุลภาค
+
+  - id: email
+    title_en: Email
+    title_th: อีเมล
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.email.enabled
+    test: none
+    steps_en: |
+      The email adapter needs EMAIL_ADDRESS, EMAIL_PASSWORD (or an app password), EMAIL_IMAP_HOST, EMAIL_IMAP_PORT, EMAIL_SMTP_HOST, and EMAIL_SMTP_PORT. EMAIL_ALLOWED_USERS is a comma-separated list of addresses. Unknown senders are ignored unless email pairing is explicitly enabled in the messaging guide.
+    steps_th: |
+      ตัวรับอีเมลต้องมี EMAIL_ADDRESS, EMAIL_PASSWORD (หรือรหัสแอป), EMAIL_IMAP_HOST, EMAIL_IMAP_PORT, EMAIL_SMTP_HOST และ EMAIL_SMTP_PORT EMAIL_ALLOWED_USERS คือที่อยู่อีเมลคั่นด้วยจุลภาค คนส่งที่ไม่อยู่ในรายการถูกเพิกเฉย เว้นแต่จะเปิดการจับคู่อีเมลตามคู่มือข้อความ
+    fields:
+      - key: EMAIL_ADDRESS
+        secret: false
+        title_en: Email address
+        title_th: ที่อยู่อีเมล
+        help_en: Mailbox address for the email gateway adapter.
+        help_th: ที่อยู่กล่องจดหมายของตัวรับอีเมล
+      - key: EMAIL_PASSWORD
+        secret: true
+        title_en: Password or app password
+        title_th: รหัสผ่านหรือรหัสแอป
+        help_en: Password or app password for that mailbox.
+        help_th: รหัสผ่านหรือรหัสแอปของกล่องจดหมายนั้น
+      - key: EMAIL_IMAP_HOST
+        secret: false
+        title_en: IMAP host
+        title_th: โฮสต์ IMAP
+        help_en: IMAP hostname.
+        help_th: ชื่อโฮสต์ IMAP
+      - key: EMAIL_IMAP_PORT
+        secret: false
+        title_en: IMAP port
+        title_th: พอร์ต IMAP
+        help_en: IMAP port.
+        help_th: พอร์ต IMAP
+      - key: EMAIL_SMTP_HOST
+        secret: false
+        title_en: SMTP host
+        title_th: โฮสต์ SMTP
+        help_en: SMTP hostname.
+        help_th: ชื่อโฮสต์ SMTP
+      - key: EMAIL_SMTP_PORT
+        secret: false
+        title_en: SMTP port
+        title_th: พอร์ต SMTP
+        help_en: SMTP port.
+        help_th: พอร์ต SMTP
+      - key: EMAIL_ALLOWED_USERS
+        secret: false
+        title_en: Allowed addresses
+        title_th: ที่อยู่ที่อนุญาต
+        help_en: Comma-separated email addresses allowed to message the bot.
+        help_th: ที่อยู่อีเมลที่ส่งหาบอทได้ คั่นด้วยจุลภาค
+
+  - id: whatsapp-cloud
+    title_en: WhatsApp Cloud API
+    title_th: WhatsApp Cloud API
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.whatsapp_cloud.enabled
+    test: none
+    token_key: WHATSAPP_CLOUD_ACCESS_TOKEN
+    steps_en: |
+      This is the Meta WhatsApp Business Cloud API, not the QR phone bridge. The QR bridge (WHATSAPP_ENABLED, WHATSAPP_MODE) is set up with hermes gateway setup because it pairs a device instead of a long-lived paste token.
+      For Cloud API, copy the Phone Number ID (15–17 digits, not the phone number) into WHATSAPP_CLOUD_PHONE_NUMBER_ID, the access token (EAA...) into WHATSAPP_CLOUD_ACCESS_TOKEN, the 32-character app secret into WHATSAPP_CLOUD_APP_SECRET, and the webhook verify token into WHATSAPP_CLOUD_VERIFY_TOKEN. Allow wa_id numbers (country code, no plus) in WHATSAPP_CLOUD_ALLOWED_USERS. The webhook defaults are host 0.0.0.0, port 8090, path /whatsapp/webhook.
+    steps_th: |
+      นี่คือ WhatsApp Business Cloud API ของ Meta ไม่ใช่สะพานที่จับคู่ด้วย QR สะพาน QR (WHATSAPP_ENABLED, WHATSAPP_MODE) ตั้งด้วย hermes gateway setup เพราะจับคู่อุปกรณ์ ไม่ใช่การวางโทเคนยาว
+      สำหรับ Cloud API ให้ใส่ Phone Number ID (15–17 หลัก ไม่ใช่เบอร์โทร) ใน WHATSAPP_CLOUD_PHONE_NUMBER_ID โทเคน (ขึ้นต้น EAA) ใน WHATSAPP_CLOUD_ACCESS_TOKEN ความลับแอป 32 ตัวอักษรใน WHATSAPP_CLOUD_APP_SECRET และโทเคนตรวจเว็บฮุกใน WHATSAPP_CLOUD_VERIFY_TOKEN ใส่ wa_id (รหัสประเทศ ไม่มีเครื่องหมายบวก) ใน WHATSAPP_CLOUD_ALLOWED_USERS ค่าเว็บฮุกเริ่มต้นคือโฮสต์ 0.0.0.0 พอร์ต 8090 เส้นทาง /whatsapp/webhook
+    fields:
+      - key: WHATSAPP_CLOUD_PHONE_NUMBER_ID
+        secret: false
+        title_en: Phone number id
+        title_th: รหัสหมายเลขโทรศัพท์
+        help_en: Meta Phone Number ID, 15–17 digits. Not the phone number itself.
+        help_th: Phone Number ID ของ Meta ยาว 15–17 หลัก ไม่ใช่ตัวเบอร์โทร
+      - key: WHATSAPP_CLOUD_ACCESS_TOKEN
+        secret: true
+        title_en: Access token
+        title_th: โทเคนเข้าถึง
+        help_en: Meta access token. Temporary tokens expire after 24 hours; System User tokens last.
+        help_th: โทเคนของ Meta โทเคนชั่วคราวหมดอายุใน 24 ชั่วโมง โทเคน System User อยู่ได้นาน
+      - key: WHATSAPP_CLOUD_APP_SECRET
+        secret: true
+        title_en: App secret
+        title_th: ความลับของแอป
+        help_en: 32-character hex app secret used to verify inbound webhook signatures.
+        help_th: ความลับแอปแบบเลขฐานสิบหก 32 ตัว ใช้ตรวจลายเซ็นเว็บฮุกขาเข้า
+      - key: WHATSAPP_CLOUD_VERIFY_TOKEN
+        secret: true
+        title_en: Webhook verify token
+        title_th: โทเคนตรวจเว็บฮุก
+        help_en: Shared secret for Meta's webhook verification handshake.
+        help_th: ความลับร่วมสำหรับขั้นตอนตรวจเว็บฮุกของ Meta
+      - key: WHATSAPP_CLOUD_ALLOWED_USERS
+        secret: false
+        title_en: Allowed wa_id numbers
+        title_th: หมายเลข wa_id ที่อนุญาต
+        help_en: Comma-separated wa_id values, country code, no plus sign.
+        help_th: ค่า wa_id คั่นด้วยจุลภาค มีรหัสประเทศ ไม่ใส่เครื่องหมายบวก
+
+  - id: teams
+    title_en: Microsoft Teams
+    title_th: Microsoft Teams
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.teams.enabled
+    test: none
+    steps_en: |
+      Teams uses an Azure Bot. Set TEAMS_CLIENT_ID, TEAMS_CLIENT_SECRET, and TEAMS_TENANT_ID from that app registration. The webhook listen port defaults to 3978 (TEAMS_PORT). TEAMS_ALLOWED_USERS takes Teams user ids or UPNs. Delivery can be graph or incoming_webhook via TEAMS_DELIVERY_MODE; an incoming webhook URL goes in TEAMS_INCOMING_WEBHOOK_URL.
+    steps_th: |
+      Teams ใช้ Azure Bot ตั้ง TEAMS_CLIENT_ID, TEAMS_CLIENT_SECRET และ TEAMS_TENANT_ID จากการลงทะเบียนแอปนั้น พอร์ตเว็บฮุกเริ่มต้นคือ 3978 (TEAMS_PORT) TEAMS_ALLOWED_USERS รับรหัสผู้ใช้ Teams หรือ UPN การส่งเลือก graph หรือ incoming_webhook ผ่าน TEAMS_DELIVERY_MODE URL ของ incoming webhook ใส่ใน TEAMS_INCOMING_WEBHOOK_URL
+    fields:
+      - key: TEAMS_CLIENT_ID
+        secret: false
+        title_en: Application client id
+        title_th: รหัสไคลเอนต์ของแอป
+        help_en: Azure AD application (Bot Framework) client id.
+        help_th: รหัสไคลเอนต์ของแอป Azure AD (Bot Framework)
+      - key: TEAMS_CLIENT_SECRET
+        secret: true
+        title_en: Client secret
+        title_th: ความลับไคลเอนต์
+        help_en: Azure AD application client secret.
+        help_th: ความลับไคลเอนต์ของแอป Azure AD
+      - key: TEAMS_TENANT_ID
+        secret: false
+        title_en: Tenant id
+        title_th: รหัสเทแนนต์
+        help_en: Azure AD tenant id that hosts the bot application.
+        help_th: รหัสเทแนนต์ Azure AD ที่เป็นเจ้าของแอปบอท
+      - key: TEAMS_ALLOWED_USERS
+        secret: false
+        title_en: Allowed users
+        title_th: ผู้ใช้ที่อนุญาต
+        help_en: Comma-separated Teams user ids or UPNs.
+        help_th: รหัสผู้ใช้ Teams หรือ UPN คั่นด้วยจุลภาค
+      - key: TEAMS_PORT
+        secret: false
+        title_en: Webhook port
+        title_th: พอร์ตเว็บฮุก
+        placeholder: "3978"
+        help_en: Webhook listen port. Bot Framework default is 3978.
+        help_th: พอร์ตเว็บฮุก ค่าเริ่มต้นของ Bot Framework คือ 3978
+
+  - id: ntfy
+    title_en: ntfy
+    title_th: ntfy
+    doc: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    enabled_key: platforms.ntfy.enabled
+    test: none
+    steps_en: |
+      ntfy is a topic you subscribe to. NTFY_TOPIC is required. NTFY_SERVER_URL defaults to https://ntfy.sh; point it at your own server if you want the messages to stay off the public server. NTFY_TOKEN is optional (Bearer tk_... or user:pass). NTFY_ALLOWED_USERS is usually the same topic name.
+    steps_th: |
+      ntfy คือหัวข้อที่บอทสมัครรับ NTFY_TOPIC จำเป็นต้องมี NTFY_SERVER_URL ค่าเริ่มต้นคือ https://ntfy.sh ชี้ไปเซิร์ฟเวอร์ตัวเองได้ถ้าไม่ต้องการให้ข้อความอยู่บนเซิร์ฟเวอร์สาธารณะ NTFY_TOKEN ไม่บังคับ (Bearer tk_... หรือ user:pass) NTFY_ALLOWED_USERS มักเป็นชื่อหัวข้อเดียวกัน
+    fields:
+      - key: NTFY_TOPIC
+        secret: false
+        title_en: Topic
+        title_th: หัวข้อ
+        help_en: Topic to subscribe to for incoming messages. Required.
+        help_th: หัวข้อที่รับข้อความเข้า จำเป็นต้องมี
+      - key: NTFY_SERVER_URL
+        secret: false
+        title_en: Server URL
+        title_th: URL ของเซิร์ฟเวอร์
+        placeholder: https://ntfy.sh
+        help_en: Server URL. Default https://ntfy.sh. A self-hosted server keeps messages off the public service.
+        help_th: URL ของเซิร์ฟเวอร์ ค่าเริ่มต้น https://ntfy.sh เซิร์ฟเวอร์ตัวเองทำให้ข้อความไม่อยู่บนบริการสาธารณะ
+      - key: NTFY_TOKEN
+        secret: true
+        title_en: Auth token
+        title_th: โทเคนยืนยันตัวตน
+        help_en: Optional. Bearer token such as tk_... or user:pass for Basic auth.
+        help_th: ไม่บังคับ โทเคน Bearer เช่น tk_... หรือ user:pass สำหรับ Basic auth
+      - key: NTFY_ALLOWED_USERS
+        secret: false
+        title_en: Allowlist
+        title_th: รายการอนุญาต
+        help_en: Treated as user ids. On ntfy these are topic names, often the same value as NTFY_TOPIC.
+        help_th: ถูกใช้เป็นรหัสผู้ใช้ บน ntfy ค่านี้คือชื่อหัวข้อ มักเท่ากับ NTFY_TOPIC
+
+field_meta:
+  TELEGRAM_BOT_TOKEN:
+    example: "123456789:AAExampleTokenFromBotFather"
+    where_en: Open Telegram, talk to @BotFather, send /newbot, and copy the HTTP API token from the reply. It is shown once in that chat.
+    where_th: เปิด Telegram พูดกับ @BotFather ส่ง /newbot แล้วคัดลอกโทเคน HTTP API จากข้อความตอบ มันโชว์ในแชทนั้น
+    links:
+      - label_en: BotFather
+        label_th: BotFather
+        url: https://t.me/BotFather
+      - label_en: Hermes Telegram guide
+        label_th: คู่มือ Telegram ของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram
+  TELEGRAM_ALLOWED_USERS:
+    example: "123456789"
+    where_en: Message @userinfobot in Telegram. Copy the Id number, not the @username. Several ids are separated by commas.
+    where_th: ส่งข้อความหา @userinfobot ใน Telegram คัดลอกเลข Id ไม่ใช่ชื่อ @ หลายคนคั่นด้วยจุลภาค
+    links:
+      - label_en: userinfobot
+        label_th: userinfobot
+        url: https://t.me/userinfobot
+  TELEGRAM_HOME_CHANNEL:
+    example: "-1001234567890"
+    where_en: Optional chat id for scheduled messages. A group id is usually negative. You can leave this blank until cron is set up.
+    where_th: ไม่บังคับ รหัสแชทสำหรับข้อความตามเวลา รหัสกลุ่มมักเป็นเลขติดลบ เว้นว่างได้จนกว่าจะตั้ง cron
+  DISCORD_BOT_TOKEN:
+    example: "a-long-token-from-the-Bot-page"
+    where_en: Discord Developer Portal → your application → Bot → Reset Token. Copy it immediately. Also turn on Message Content Intent and Server Members Intent on that page.
+    where_th: Discord Developer Portal → แอปของคุณ → Bot → Reset Token คัดลอกทันที และเปิด Message Content Intent กับ Server Members Intent ในหน้านั้น
+    links:
+      - label_en: Discord Developer Portal
+        label_th: Discord Developer Portal
+        url: https://discord.com/developers/applications
+      - label_en: Hermes Discord guide
+        label_th: คู่มือ Discord ของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord
+  DISCORD_ALLOWED_USERS:
+    example: "123456789012345678"
+    where_en: In the Discord app, enable Developer Mode in Advanced settings, then right-click your avatar and choose Copy User ID.
+    where_th: ในแอป Discord เปิด Developer Mode ที่การตั้งค่าขั้นสูง แล้วคลิกขวาที่รูปของคุณ เลือก Copy User ID
+  DISCORD_REQUIRE_MENTION:
+    example: "true"
+    where_en: Type true or false. true is the documented default for server channels.
+    where_th: พิมพ์ true หรือ false ค่า true คือค่าเริ่มต้นในเอกสารสำหรับช่องในเซิร์ฟเวอร์
+  LINE_CHANNEL_ACCESS_TOKEN:
+    example: "a-long-lived-token-from-the-Messaging-API-tab"
+    where_en: LINE Developers Console → your Messaging API channel → Messaging API tab → Channel access token (long-lived) → Issue. Copy that token.
+    where_th: LINE Developers Console → ช่อง Messaging API → แท็บ Messaging API → Channel access token (long-lived) → Issue แล้วคัดลอกโทเคน
+    links:
+      - label_en: LINE Developers Console
+        label_th: LINE Developers Console
+        url: https://developers.line.biz/console/
+      - label_en: Hermes LINE guide
+        label_th: คู่มือ LINE ของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line
+  LINE_CHANNEL_SECRET:
+    example: "0123456789abcdef0123456789abcdef"
+    where_en: Same channel → Basic settings tab → Channel secret. Hermes uses it to check webhook signatures. This example is the shape only, 32 hex characters, not a real secret.
+    where_th: ช่องเดียวกัน → แท็บ Basic settings → Channel secret Hermes ใช้ตรวจลายเซ็นเว็บฮุก ตัวอย่างนี้เป็นแค่รูปร่าง อักษรฐานสิบหก 32 ตัว ไม่ใช่ความลับจริง
+  LINE_ALLOWED_USERS:
+    example: "U0123456789abcdef0123456789abcdef"
+    where_en: LINE user ids start with U. Hermes learns them from messages after the webhook works, or you can read them in the LINE console logs. At least one of users, groups, or rooms must be set unless you are on a private test.
+    where_th: รหัสผู้ใช้ LINE ขึ้นต้นด้วย U Hermes เห็นจากข้อความหลังเว็บฮุกทำงาน หรือดูในบันทึกของคอนโซล LINE ต้องมีอย่างน้อยหนึ่งรายการในผู้ใช้ กลุ่ม หรือห้อง ถ้าไม่ได้ทดสอบส่วนตัว
+  LINE_ALLOWED_GROUPS:
+    example: "C0123456789abcdef0123456789abcdef"
+    where_en: Optional. Group ids start with C.
+    where_th: ไม่บังคับ รหัสกลุ่มขึ้นต้นด้วย C
+  LINE_PUBLIC_URL:
+    example: "https://my-tunnel.example.com"
+    where_en: The https address that reaches this PC (a tunnel such as the one you already use). Required before the bot can send images, audio, or video. Text replies can work once the webhook URL in the LINE console points at this host.
+    where_th: ที่อยู่ https ที่เข้าถึงเครื่องนี้ได้ (อุโมงค์ที่คุณใช้อยู่ก็ได้) จำเป็นก่อนบอทจะส่งรูป เสียง หรือวิดีโอ ข้อความตัวอักษรใช้ได้เมื่อ URL เว็บฮุกในคอนโซล LINE ชี้มาที่โฮสต์นี้
+  LINE_PORT:
+    example: "8646"
+    where_en: Local port from the Hermes LINE guide. Default 8646. Your tunnel should forward to this port.
+    where_th: พอร์ตในเครื่องตามคู่มือ LINE ของ Hermes ค่าเริ่มต้น 8646 อุโมงค์ควรส่งต่อไปพอร์ตนี้
+  SLACK_BOT_TOKEN:
+    example: "xoxb-example-bot-token"
+    where_en: Slack app → OAuth & Permissions → Bot User OAuth Token. It starts with xoxb-.
+    where_th: แอป Slack → OAuth & Permissions → Bot User OAuth Token ขึ้นต้นด้วย xoxb-
+  SLACK_APP_TOKEN:
+    example: "xapp-example-app-token"
+    where_en: Slack app → Basic Information → App-Level Tokens. Create one for Socket Mode. It starts with xapp-.
+    where_th: แอป Slack → Basic Information → App-Level Tokens สร้างหนึ่งอันสำหรับ Socket Mode ขึ้นต้นด้วย xapp-
+  SLACK_ALLOWED_USERS:
+    example: "U012ABCDEF"
+    where_en: Your Slack member id. In Slack, open your profile; the member id is shown there.
+    where_th: รหัสสมาชิก Slack ของคุณ เปิดโปรไฟล์ใน Slack รหัสสมาชิกอยู่ตรงนั้น

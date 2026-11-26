@@ -1,0 +1,388 @@
+# Providers the wizard can save. Ids and endpoints come from the Hermes provider guide.
+# https://hermes-agent.nousresearch.com/docs/integrations/providers
+# The suggested DeepSeek id is the one the Hermes OpenRouter Everything plugin
+# documents as its text default. OpenRouter changes ids; the page can refresh
+# the live catalog. It does not invent a model.
+
+providers:
+  - id: openrouter
+    title_en: OpenRouter (recommended on this PC)
+    title_th: OpenRouter (แนะนำสำหรับเครื่องนี้)
+    recommended: true
+    config_provider: openrouter
+    key_env: OPENROUTER_API_KEY
+    key_required: true
+    base_url_env: OPENROUTER_BASE_URL
+    test: openrouter
+    default_model: deepseek/deepseek-v4.1-flash-1017
+    example_model: deepseek/deepseek-v4.1-flash-1017
+    example_key: sk-or-v1-...
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Create a key at the OpenRouter keys page. The value starts with sk-or-.
+      Paste it in the key box. Hermes stores it as OPENROUTER_API_KEY in
+      ~/.hermes/.env. Pick a model id from OpenRouter's model list. DeepSeek
+      models on OpenRouter look like deepseek/deepseek-... . The Hermes
+      OpenRouter Everything plugin documents deepseek/deepseek-v4.1-flash-1017
+      as a text default, and the delegation guide uses
+      deepseek/deepseek-v4-flash-0731 as another example. If Fetch models does
+      not list the example, the id has changed: use an id the live list shows.
+    where_th: >
+      สร้างคีย์ที่หน้าคีย์ของ OpenRouter ค่าขึ้นต้นด้วย sk-or- วางในช่องคีย์
+      Hermes เก็บเป็น OPENROUTER_API_KEY ใน ~/.hermes/.env เลือกชื่อโมเดลจากรายการ
+      ของ OpenRouter โมเดล DeepSeek บน OpenRouter มีรูป deepseek/deepseek-...
+      ปลั๊กอิน OpenRouter Everything ของ Hermes ใช้
+      deepseek/deepseek-v4.1-flash-1017 เป็นค่าข้อความเริ่มต้น และคู่มือ
+      delegation ยกตัวอย่าง deepseek/deepseek-v4-flash-0731 ถ้าปุ่มดึงรายการ
+      ไม่มีตัวอย่างนี้ แปลว่าชื่อเปลี่ยน ให้ใช้ชื่อที่รายการสดแสดง
+    about_en: >
+      OpenRouter is a cloud gateway. This Dell OptiPlex has no GPU, so the
+      model runs on OpenRouter's servers, not on this PC. One key can call
+      DeepSeek and many other models. A direct DeepSeek key (DEEPSEEK_API_KEY)
+      is a different provider and is not used here. You can also log in with
+      hermes auth add openrouter --type oauth; that stores a key in Hermes'
+      credential pool instead of this box.
+    about_th: >
+      OpenRouter เป็นทางผ่านบนคลาวด์ เครื่อง Dell OptiPlex นี้ไม่มี GPU
+      โมเดลจึงรันบนเซิร์ฟเวอร์ของ OpenRouter ไม่ได้รันในเครื่อง คีย์เดียวเรียก
+      DeepSeek และโมเดลอื่นได้ คีย์ DeepSeek ตรง (DEEPSEEK_API_KEY) เป็นคนละ
+      ผู้ให้บริการ ไม่ได้ใช้ในตัวเลือกนี้ อีกทางคือ hermes auth add openrouter
+      --type oauth ซึ่งเก็บคีย์ในคลังของ Hermes แทนช่องนี้
+    low_spec_en: >
+      Recommended for 16 GB RAM and no GPU: provider openrouter, a DeepSeek
+      model id from the live list, terminal.backend local (commands run on
+      this PC, no Docker), timezone Asia/Bangkok, approvals.mode smart, and
+      provider_routing.sort price. Inference stays in the cloud.
+    low_spec_th: >
+      แนะนำสำหรับแรม 16 GB และไม่มี GPU: ผู้ให้บริการ openrouter, ชื่อโมเดล
+      DeepSeek จากรายการสด, terminal.backend เป็น local (คำสั่งรันบนเครื่องนี้
+      ไม่ใช้ Docker), เขตเวลา Asia/Bangkok, approvals.mode เป็น smart และ
+      provider_routing.sort เป็น price การประมวลผลโมเดลอยู่บนคลาวด์
+    links:
+      - label_en: OpenRouter keys
+        label_th: หน้าคีย์ OpenRouter
+        url: https://openrouter.ai/keys
+      - label_en: OpenRouter models
+        label_th: รายการโมเดล OpenRouter
+        url: https://openrouter.ai/models
+      - label_en: Hermes provider guide
+        label_th: คู่มือผู้ให้บริการของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: openai
+    title_en: OpenAI
+    title_th: OpenAI
+    config_provider: openai-api
+    key_env: OPENAI_API_KEY
+    key_required: true
+    base_url_env: OPENAI_BASE_URL
+    default_base_url: https://api.openai.com/v1
+    test: openai_models
+    example_key: sk-...
+    example_model: gpt-4o
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Create a secret key in the OpenAI API keys page. Hermes' provider id is
+      openai-api and the env var is OPENAI_API_KEY. Leave the base URL blank
+      for the official API. Set OPENAI_BASE_URL only for a custom
+      OpenAI-compatible server. A key that starts with sk-or- is an OpenRouter
+      key; put that in the OpenRouter choice instead.
+    where_th: >
+      สร้างคีย์ลับที่หน้า API keys ของ OpenAI รหัสผู้ให้บริการใน Hermes คือ
+      openai-api และตัวแปรคือ OPENAI_API_KEY เว้นที่อยู่ฐานว่างสำหรับ API ทางการ
+      ตั้ง OPENAI_BASE_URL เฉพาะเมื่อชี้ไปเซิร์ฟเวอร์ที่เข้ากันได้กับ OpenAI
+      คีย์ที่ขึ้นต้น sk-or- เป็นคีย์ OpenRouter ให้ไปใส่ในตัวเลือก OpenRouter
+    about_en: OpenAI's own API. This is not OpenRouter and not ChatGPT OAuth (that provider id is openai-codex and uses a browser login).
+    about_th: API ของ OpenAI เอง ไม่ใช่ OpenRouter และไม่ใช่การล็อกอิน ChatGPT (รหัสนั้นคือ openai-codex และใช้การล็อกอินผ่านเบราว์เซอร์)
+    links:
+      - label_en: OpenAI API keys
+        label_th: หน้าคีย์ OpenAI
+        url: https://platform.openai.com/api-keys
+      - label_en: Hermes provider guide
+        label_th: คู่มือผู้ให้บริการของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: anthropic
+    title_en: Anthropic
+    title_th: Anthropic
+    config_provider: anthropic
+    key_env: ANTHROPIC_API_KEY
+    key_required: true
+    test: anthropic
+    example_key: sk-ant-...
+    example_model: claude-sonnet-4
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Create a key in the Anthropic console. Hermes reads ANTHROPIC_API_KEY.
+      The fallback guide shows a native model id shaped like claude-sonnet-4.
+      Copy the current id from the Anthropic model list; names change.
+      Claude subscription login is a different path (OAuth inside hermes model),
+      not this API key.
+    where_th: >
+      สร้างคีย์ในคอนโซล Anthropic Hermes อ่าน ANTHROPIC_API_KEY คู่มือ fallback
+      แสดงชื่อโมเดลตรงรูปแบบ claude-sonnet-4 ให้คัดลอกชื่อปัจจุบันจากรายการโมเดล
+      ของ Anthropic เพราะชื่อเปลี่ยน การล็อกอินสมาชิก Claude เป็นอีกทาง
+      (OAuth ใน hermes model) ไม่ใช่คีย์ API นี้
+    about_en: Native Anthropic API. The test calls the models list with the x-api-key header and does not print the key.
+    about_th: API ของ Anthropic โดยตรง การทดสอบเรียกรายการโมเดลด้วยส่วนหัว x-api-key และไม่พิมพ์คีย์
+    links:
+      - label_en: Anthropic API keys
+        label_th: หน้าคีย์ Anthropic
+        url: https://console.anthropic.com/settings/keys
+      - label_en: Hermes provider guide
+        label_th: คู่มือผู้ให้บริการของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: deepseek
+    title_en: DeepSeek direct
+    title_th: DeepSeek ตรง
+    config_provider: deepseek
+    key_env: DEEPSEEK_API_KEY
+    key_required: true
+    base_url_env: DEEPSEEK_BASE_URL
+    default_base_url: https://api.deepseek.com/v1
+    test: openai_models
+    example_key: sk-...
+    example_model: deepseek-chat
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      This is DeepSeek's own API at platform.deepseek.com, provider id deepseek.
+      It does not use an OpenRouter key. The provider guide lists the base URL
+      as https://api.deepseek.com/v1. Copy the model id DeepSeek shows for that
+      account. For DeepSeek through OpenRouter, go back to the OpenRouter choice
+      and use an id that contains a slash, such as deepseek/deepseek-v4.1-flash-1017.
+    where_th: >
+      นี่คือ API ของ DeepSeek เองที่ platform.deepseek.com รหัส deepseek
+      ไม่ใช้คีย์ OpenRouter คู่มือระบุที่อยู่ฐาน https://api.deepseek.com/v1
+      ให้คัดลอกชื่อโมเดลที่ DeepSeek แสดงในบัญชีนั้น ถ้าจะใช้ DeepSeek ผ่าน
+      OpenRouter ให้กลับไปตัวเลือก OpenRouter และใช้ชื่อที่มีเครื่องหมายทับ
+      เช่น deepseek/deepseek-v4.1-flash-1017
+    about_en: Direct DeepSeek. Leave this choice if the key in your password manager came from openrouter.ai.
+    about_th: DeepSeek ตรง ถ้าคีย์ในตัวจัดการรหัสผ่านมาจาก openrouter.ai ให้ใช้ตัวเลือก OpenRouter
+    links:
+      - label_en: DeepSeek API keys
+        label_th: หน้าคีย์ DeepSeek
+        url: https://platform.deepseek.com/api_keys
+      - label_en: Hermes provider guide
+        label_th: คู่มือผู้ให้บริการของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: gemini
+    title_en: Google Gemini
+    title_th: Google Gemini
+    config_provider: gemini
+    key_env: GEMINI_API_KEY
+    key_required: true
+    test: gemini
+    example_key: AIza...
+    example_model: gemini-2.5-flash
+    source: https://hermes-agent.nousresearch.com/docs/reference/environment-variables
+    where_en: >
+      Create a key in Google AI Studio. Hermes accepts GEMINI_API_KEY as an
+      alias of GOOGLE_API_KEY. The provider id in the fallback list is gemini.
+      Copy the model id from AI Studio.
+    where_th: >
+      สร้างคีย์ใน Google AI Studio Hermes รับ GEMINI_API_KEY ซึ่งเป็นชื่อเดียวกับ
+      GOOGLE_API_KEY รหัสในรายการ fallback คือ gemini คัดลอกชื่อโมเดลจาก AI Studio
+    about_en: Google AI Studio key. The test requests the model list with the x-goog-api-key header so the key stays out of the URL.
+    about_th: คีย์ Google AI Studio การทดสอบขอดูรายการโมเดลด้วยส่วนหัว x-goog-api-key เพื่อไม่ให้คีย์ไปอยู่ใน URL
+    links:
+      - label_en: Google AI Studio keys
+        label_th: หน้าคีย์ Google AI Studio
+        url: https://aistudio.google.com/app/apikey
+
+  - id: xai
+    title_en: xAI (Grok)
+    title_th: xAI (Grok)
+    config_provider: xai
+    key_env: XAI_API_KEY
+    key_required: true
+    default_base_url: https://api.x.ai/v1
+    test: openai_models
+    example_key: xai-...
+    example_model: grok-3
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: Create a key at console.x.ai. Hermes provider id is xai and the env var is XAI_API_KEY. Default base URL in the env guide is https://api.x.ai/v1.
+    where_th: สร้างคีย์ที่ console.x.ai รหัสใน Hermes คือ xai ตัวแปรคือ XAI_API_KEY ที่อยู่ฐานในคู่มือตัวแปรคือ https://api.x.ai/v1
+    about_en: xAI's API for Grok. Copy the model id from the xAI console.
+    about_th: API ของ xAI สำหรับ Grok คัดลอกชื่อโมเดลจากคอนโซล xAI
+    links:
+      - label_en: xAI console
+        label_th: คอนโซล xAI
+        url: https://console.x.ai/
+
+  - id: ollama-cloud
+    title_en: Ollama Cloud
+    title_th: Ollama Cloud
+    config_provider: ollama-cloud
+    key_env: OLLAMA_API_KEY
+    key_required: true
+    default_base_url: https://ollama.com/v1
+    test: openai_models
+    example_key: "..."
+    example_model: qwen3-coder:480b-cloud
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Ollama Cloud is a hosted catalog, provider id ollama-cloud. Create a key
+      at ollama.com/settings/keys. This is not local Ollama. The env guide's
+      default base URL is https://ollama.com/v1. The provider page's example
+      of model:tag notation is qwen3-coder:480b-cloud.
+    where_th: >
+      Ollama Cloud คือรายการโมเดลบนคลาวด์ รหัส ollama-cloud สร้างคีย์ที่
+      ollama.com/settings/keys นี่ไม่ใช่ Ollama ในเครื่อง ที่อยู่ฐานในคู่มือตัวแปร
+      คือ https://ollama.com/v1 เอกสารยกตัวอย่างชื่อแบบ model:tag คือ
+      qwen3-coder:480b-cloud
+    about_en: Cloud Ollama. No GPU is required on this PC. It is a different account from OpenRouter.
+    about_th: Ollama บนคลาวด์ ไม่ต้องมี GPU ในเครื่องนี้ คนละบัญชีกับ OpenRouter
+    links:
+      - label_en: Ollama Cloud keys
+        label_th: หน้าคีย์ Ollama Cloud
+        url: https://ollama.com/settings/keys
+
+  - id: lmstudio
+    title_en: LM Studio
+    title_th: LM Studio
+    config_provider: lmstudio
+    key_env: LM_API_KEY
+    key_required: false
+    base_url_env: LM_BASE_URL
+    default_base_url: http://localhost:1234/v1
+    base_in_config: false
+    show_context: true
+    test: openai_models
+    example_key: lmstudio
+    example_model: a-model-name-loaded-in-lm-studio
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Install LM Studio, load a model, and start its local server. Hermes
+      provider id is lmstudio. LM_BASE_URL defaults to http://localhost:1234/v1.
+      LM_API_KEY is optional and is often a placeholder on a local server.
+      This PC has no GPU and 16 GB of RAM. A local model large enough for
+      Hermes' tools will be slow or will not load. Prefer OpenRouter unless
+      you are only experimenting.
+    where_th: >
+      ติดตั้ง LM Studio โหลดโมเดล แล้วเปิดเซิร์ฟเวอร์ในเครื่อง รหัสใน Hermes คือ
+      lmstudio ค่า LM_BASE_URL เริ่มต้นคือ http://localhost:1234/v1
+      LM_API_KEY ไม่บังคับ และบนเซิร์ฟเวอร์ในเครื่องมักเป็นค่าจำลอง
+      เครื่องนี้ไม่มี GPU และมีแรม 16 GB โมเดลในเครื่องที่ใหญ่พอสำหรับเครื่องมือ
+      ของ Hermes จะช้าหรือโหลดไม่ขึ้น ใช้ OpenRouter จะตรงกับเครื่องนี้มากกว่า
+      ถ้าไม่ได้กำลังทดลองเฉพาะ
+    about_en: LM Studio's local OpenAI-compatible server. The test calls /v1/models on the base URL.
+    about_th: เซิร์ฟเวอร์ในเครื่องของ LM Studio ที่เข้ากันได้กับ OpenAI การทดสอบเรียก /v1/models ที่ที่อยู่ฐาน
+    low_spec_en: Hermes wants at least 64,000 tokens of context for agent tools. A local server that reports less is refused at startup.
+    low_spec_th: Hermes ต้องการบริบทอย่างน้อย 64,000 โทเคนสำหรับงานเอเจนต์ เซิร์ฟเวอร์ในเครื่องที่รายงานน้อยกว่านั้นจะถูกปฏิเสธตอนเริ่ม
+    links:
+      - label_en: Hermes provider guide (LM Studio)
+        label_th: คู่มือ Hermes (LM Studio)
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: ollama-local
+    title_en: Local Ollama (custom endpoint)
+    title_th: Ollama ในเครื่อง (ปลายทางกำหนดเอง)
+    config_provider: custom
+    key_required: false
+    default_base_url: http://localhost:11434/v1
+    base_in_config: true
+    show_context: true
+    test: openai_models
+    example_model: qwen2.5-coder:32b
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Local Ollama is not a built-in provider id. The guide says to choose
+      Custom endpoint, set model.provider to custom, set model.base_url to
+      http://localhost:11434/v1, and skip the API key. The model name is
+      whatever `ollama list` shows. The guide's example is qwen2.5-coder:32b.
+      Set the server context to at least 64000 (OLLAMA_CONTEXT_LENGTH or a
+      Modelfile num_ctx) and set model.context_length to the same number.
+      model.ollama_num_ctx is the config key Hermes reads for the window a
+      local server really serves.
+    where_th: >
+      Ollama ในเครื่องไม่ใช่รหัสผู้ให้บริการในตัว คู่มือบอกให้เลือก Custom
+      endpoint ตั้ง model.provider เป็น custom ตั้ง model.base_url เป็น
+      http://localhost:11434/v1 และข้ามคีย์ API ชื่อโมเดลคือสิ่งที่ `ollama list`
+      แสดง ตัวอย่างในคู่มือคือ qwen2.5-coder:32b ตั้งบริบทของเซิร์ฟเวอร์อย่างน้อย
+      64000 (OLLAMA_CONTEXT_LENGTH หรือ num_ctx ใน Modelfile) และตั้ง
+      model.context_length ให้ตรงกัน model.ollama_num_ctx คือคีย์ที่ Hermes
+      อ่านสำหรับขนาดหน้าต่างที่เซิร์ฟเวอร์ในเครื่องให้จริง
+    about_en: >
+      Ollama on this computer. There is no API key. This OptiPlex has no GPU
+      and 16 GB of RAM. Ollama's own default context under 24 GB of VRAM is
+      4,096 tokens, and Hermes rejects a local endpoint under 64,000 tokens.
+      A 32B coder model from the guide will not fit comfortably. Use OpenRouter
+      for daily work. Use this page only for a small experiment.
+    about_th: >
+      Ollama บนเครื่องนี้ ไม่มีคีย์ API OptiPlex นี้ไม่มี GPU และมีแรม 16 GB
+      ค่าบริบทเริ่มต้นของ Ollama เมื่อ VRAM ต่ำกว่า 24 GB คือ 4,096 โทเคน
+      และ Hermes ปฏิเสธปลายทางในเครื่องที่ต่ำกว่า 64,000 โทเคน โมเดล coder 32B
+      ในตัวอย่างคู่มือไม่พอดีกับเครื่องนี้ ใช้งานประจำให้ใช้ OpenRouter
+      ใช้หน้านี้เมื่ออยากทดลองสั้น ๆ
+    low_spec_en: Not the recommended path on this PC. Cloud OpenRouter avoids the 64k context requirement of a local server.
+    low_spec_th: ไม่ใช่ทางที่แนะนำบนเครื่องนี้ OpenRouter บนคลาวด์ไม่ติดเงื่อนไขบริบท 64k ของเซิร์ฟเวอร์ในเครื่อง
+    links:
+      - label_en: Hermes local Ollama section
+        label_th: ส่วน Ollama ในเครื่องของ Hermes
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - id: nous
+    title_en: Nous Portal (browser login)
+    title_th: Nous Portal (ล็อกอินผ่านเบราว์เซอร์)
+    config_provider: nous
+    key_required: false
+    test: nous
+    example_model: ""
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    where_en: >
+      Nous Portal does not use a pasted API key. On a fresh install the
+      documented command is hermes setup --portal. It opens a browser login,
+      sets Nous as the provider, and turns on the Tool Gateway. There is no
+      key box on this page because inventing one would not match the docs.
+    where_th: >
+      Nous Portal ไม่ได้ใช้การวางคีย์ API คำสั่งในเอกสารสำหรับการติดตั้งใหม่คือ
+      hermes setup --portal มันเปิดให้ล็อกอินในเบราว์เซอร์ ตั้ง Nous เป็น
+      ผู้ให้บริการ และเปิด Tool Gateway หน้านี้ไม่มีช่องคีย์ เพราะการสมมติคีย์
+      จะไม่ตรงกับเอกสาร
+    about_en: One Nous subscription covers many models and the Tool Gateway (web search, image generation, TTS, cloud browser). The test button only explains this; it cannot finish OAuth for you.
+    about_th: สมาชิก Nous ใบเดียวครอบคลุมหลายโมเดลและ Tool Gateway (ค้นเว็บ สร้างภาพ TTS เบราว์เซอร์บนคลาวด์) ปุ่มทดสอบเพียงอธิบายทางนี้ มันล็อกอิน OAuth ให้ไม่ได้
+    links:
+      - label_en: Nous Portal
+        label_th: Nous Portal
+        url: https://portal.nousresearch.com
+      - label_en: Installation guide
+        label_th: คู่มือติดตั้ง
+        url: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+
+  - id: other
+    title_en: Another documented provider
+    title_th: ผู้ให้บริการอื่นที่มีในเอกสาร
+    config_provider: ""
+    key_required: false
+    test: openai_models
+    allow_typed_provider: true
+    allow_typed_key_env: true
+    base_in_config: true
+    example_model: vendor/model-name
+    example_key: sk-...
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+    where_en: >
+      Hermes documents many more providers (MiniMax, NVIDIA, Hugging Face,
+      Bedrock, a custom OpenAI-compatible URL, and others). Type the provider
+      id exactly as the guide spells it, the env var name for its key
+      (UPPER_SNAKE, for example MINIMAX_API_KEY), and the model id. Put a base
+      URL only when the guide says that provider uses model.base_url or a
+      custom endpoint. The test runs only when a base URL is filled, and it
+      calls that URL's /models path. Providers that use browser OAuth have no
+      paste-key test here; use hermes model for those.
+    where_th: >
+      Hermes มีผู้ให้บริการอีกมาก (MiniMax, NVIDIA, Hugging Face, Bedrock,
+      URL ที่เข้ากันได้กับ OpenAI และอื่น ๆ) พิมพ์รหัสผู้ให้บริการให้ตรงกับคู่มือ
+      ชื่อตัวแปรของคีย์ (ตัวใหญ่และขีดล่าง เช่น MINIMAX_API_KEY) และชื่อโมเดล
+      ใส่ที่อยู่ฐานเมื่อคู่มือบอกว่าผู้ให้บริการนั้นใช้ model.base_url หรือ
+      ปลายทางกำหนดเอง การทดสอบรันเมื่อกรอกที่อยู่ฐาน และเรียกเส้นทาง /models
+      ของ URL นั้น ผู้ให้บริการที่ใช้ OAuth ผ่านเบราว์เซอร์ไม่มีปุ่มวางคีย์ที่นี่
+      ให้ใช้ hermes model
+    about_en: A free-form row so a provider from the official list can be saved without a wizard update. The id is written to model.provider as you type it.
+    about_th: แถวกรอกเอง เพื่อบันทึกผู้ให้บริการจากรายการทางการได้โดยไม่ต้องรออัปเดตตัวช่วย รหัสถูกเขียนลง model.provider ตามที่พิมพ์
+    links:
+      - label_en: Full provider list
+        label_th: รายชื่อผู้ให้บริการทั้งหมด
+        url: https://hermes-agent.nousresearch.com/docs/integrations/providers

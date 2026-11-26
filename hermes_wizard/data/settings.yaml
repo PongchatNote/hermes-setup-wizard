@@ -1,0 +1,719 @@
+# Non-secret Hermes settings. Keys match the configuration guide.
+# https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+# Blank optional values are removed on save so Hermes keeps its own default.
+# The Provider page writes model.provider, model.default, and model.base_url.
+
+groups:
+  - id: model
+    title_en: More model options
+    title_th: ตัวเลือกโมเดลเพิ่ม
+  - id: agent
+    title_en: Agent
+    title_th: เอเจนต์
+  - id: terminal
+    title_en: Terminal
+    title_th: เทอร์มินัล
+  - id: memory
+    title_en: Memory and skills
+    title_th: ความจำและสกิล
+  - id: compression
+    title_en: Compression and files
+    title_th: การย่อบริบทและไฟล์
+  - id: display
+    title_en: Display
+    title_th: การแสดงผล
+  - id: security
+    title_en: Security and approvals
+    title_th: ความปลอดภัยและการอนุมัติ
+  - id: browser
+    title_en: Browser and web
+    title_th: เบราว์เซอร์และเว็บ
+  - id: voice
+    title_en: Voice
+    title_th: เสียง
+  - id: delegation
+    title_en: Delegation
+    title_th: การมอบงาน
+  - id: gateway
+    title_en: Gateway options
+    title_th: ตัวเลือกเกตเวย์
+  - id: system
+    title_en: Time, network, updates
+    title_th: เวลา เครือข่าย อัปเดต
+
+settings:
+  - key: provider_routing.sort
+    group: model
+    type: choice
+    choices: ["price", "throughput", "latency"]
+    default: price
+    title_en: OpenRouter route sorting
+    title_th: การจัดเรียงเส้นทาง OpenRouter
+    example: price
+    where_en: Written under provider_routing.sort in ~/.hermes/config.yaml. Used when the provider is OpenRouter. price is the documented default. :floor on a model name is the shortcut for price, :nitro for throughput.
+    where_th: เขียนที่ provider_routing.sort ใน ~/.hermes/config.yaml ใช้เมื่อผู้ให้บริการเป็น OpenRouter price คือค่าเริ่มต้นในเอกสาร การเติม :floor ท้ายชื่อโมเดลคือทางลัดของ price และ :nitro คือทางลัดของ throughput
+    help_en: How OpenRouter picks a backend for a model. price prefers cheaper routes. throughput and latency prefer speed.
+    help_th: วิธีที่ OpenRouter เลือกเซิร์ฟเวอร์ของโมเดล price เลือกทางที่ถูกกว่า throughput และ latency เลือกความเร็ว
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - key: openrouter.min_coding_score
+    group: model
+    type: float
+    title_en: Pareto code minimum score
+    title_th: คะแนนขั้นต่ำของ Pareto code
+    example: "0.65"
+    placeholder: "0.65"
+    where_en: Only sent when the model id is openrouter/pareto-code. Documented default is 0.65. Range 0.0 to 1.0.
+    where_th: ส่งเมื่อชื่อโมเดลเป็น openrouter/pareto-code เท่านั้น ค่าเริ่มต้นในเอกสารคือ 0.65 ช่วง 0.0 ถึง 1.0
+    help_en: Higher asks OpenRouter's Pareto code router for stronger, usually more expensive, coding models.
+    help_th: ค่ายิ่งสูงยิ่งขอเราเตอร์ Pareto code ให้เลือกโมเดลเขียนโค้ดที่เก่งขึ้น ซึ่งมักแพงขึ้น
+    source: https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+  - key: auxiliary.compression.provider
+    group: model
+    type: str
+    placeholder: auto
+    example: auto
+    title_en: Compression provider
+    title_th: ผู้ให้บริการสำหรับย่อบริบท
+    where_en: auxiliary.compression.provider in config.yaml. auto uses the main chat model. Set openrouter (or another provider id) to force one.
+    where_th: auxiliary.compression.provider ใน config.yaml ค่า auto ใช้โมเดลแชทหลัก ตั้ง openrouter หรือรหัสอื่นเพื่อบังคับผู้ให้บริการ
+    help_en: Summaries of long chats are a separate model call. Leave auto unless you want a cheaper model for summaries.
+    help_th: การสรุปแชทยาวเป็นการเรียกโมเดลอีกครั้ง ปล่อย auto ไว้ถ้าไม่ต้องการโมเดลที่ถูกกว่าสำหรับสรุป
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: auxiliary.compression.model
+    group: model
+    type: str
+    example: google/gemini-2.5-flash
+    title_en: Compression model
+    title_th: โมเดลสำหรับย่อบริบท
+    where_en: auxiliary.compression.model. Empty means the main chat model. The guide's cheaper-model example is google/gemini-2.5-flash on OpenRouter.
+    where_th: auxiliary.compression.model ว่างแปลว่าใช้โมเดลแชทหลัก ตัวอย่างโมเดลถูกกว่าในคู่มือคือ google/gemini-2.5-flash บน OpenRouter
+    help_en: Optional model id for summaries only. It does not change the chat model chosen on the Provider page.
+    help_th: ชื่อโมเดลสำหรับสรุปเท่านั้น ไม่เปลี่ยนโมเดลแชทที่เลือกในหน้าผู้ให้บริการ
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: agent.reasoning_effort
+    group: agent
+    type: choice
+    choices: ["", "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
+    title_en: Reasoning effort
+    title_th: ระดับการคิด
+    example: medium
+    where_en: agent.reasoning_effort. Empty means medium. OpenRouter clamps the value to what that model supports.
+    where_th: agent.reasoning_effort ค่าว่างแปลว่า medium OpenRouter จะปรับค่าให้เหลือระดับที่โมเดลนั้นรองรับ
+    help_en: How hard the model thinks before answering. Higher costs more tokens and time. medium is the documented balance.
+    help_th: โมเดลจะคิดหนักแค่ไหนก่อนตอบ ค่ายิ่งสูงยิ่งใช้โทเคนและเวลามาก medium คือจุดสมดุลในเอกสาร
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: agent.max_turns
+    group: agent
+    type: str
+    placeholder: none
+    example: none
+    title_en: Max turns
+    title_th: จำนวนเทิร์นสูงสุด
+    where_en: agent.max_turns. none (also null, unlimited, inf, 0, -1) means no cap. A positive integer stops a turn after that many tool iterations.
+    where_th: agent.max_turns ค่า none (รวม null, unlimited, inf, 0, -1) แปลว่าไม่จำกัด จำนวนเต็มบวกจะหยุดเทิร์นหลังใช้เครื่องมือครบจำนวนนั้น
+    help_en: The default is unlimited. A cap can save money on a paid API if a task loops. The guide says a cap also used to cut off real work, which is why unlimited is the default.
+    help_th: ค่าเริ่มต้นคือไม่จำกัด การจำกัดช่วยประหยัดเงินบน API แบบจ่ายตามใช้ถ้างานวนลูป คู่มือบอกว่าการจำกัดเคยตัดงานจริง จึงตั้งไม่จำกัดเป็นค่าเริ่มต้น
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: agent.api_max_retries
+    group: agent
+    type: int
+    default: 3
+    example: "3"
+    title_en: API retries
+    title_th: จำนวนครั้งที่ลอง API ใหม่
+    where_en: agent.api_max_retries. Default 3 means four attempts before a fallback provider is tried.
+    where_th: agent.api_max_retries ค่าเริ่มต้น 3 แปลว่าพยายามสี่ครั้งก่อนไปผู้ให้บริการสำรอง
+    help_en: Retries on rate limits, dropped connections, and server errors.
+    help_th: จำนวนครั้งที่ลองใหม่เมื่อถูกจำกัดอัตรา การเชื่อมต่อหลุด หรือเซิร์ฟเวอร์ผิดพลาด
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: agent.clarify_timeout
+    group: agent
+    type: int
+    default: 90
+    example: "90"
+    title_en: Clarify timeout (seconds)
+    title_th: เวลารอคำถามชี้แจง (วินาที)
+    where_en: agent.clarify_timeout. Default 90. 0 or less waits forever.
+    where_th: agent.clarify_timeout ค่าเริ่มต้น 90 ค่า 0 หรือต่ำกว่าแปลว่ารอไปเรื่อย ๆ
+    help_en: How long Hermes waits when it asks you a clarifying question, in the terminal, the desktop app, or a chat bot.
+    help_th: Hermes รอนานแค่ไหนเมื่อถามให้คุณอธิบายเพิ่ม ทั้งในเทอร์มินัล แอปเดสก์ท็อป และแชทบอท
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: agent.verify_on_stop
+    group: agent
+    type: choice
+    choices: ["false", "true", "auto"]
+    default: "false"
+    example: "false"
+    title_en: Verify code before stopping
+    title_th: ตรวจโค้ดก่อนจบงาน
+    where_en: agent.verify_on_stop. false is the default. true asks for a test or build after code edits. auto turns that on for the CLI and desktop and off for chat bots.
+    where_th: agent.verify_on_stop ค่า false เป็นค่าเริ่มต้น true จะขอให้มีเทสต์หรือการบิลด์หลังแก้โค้ด auto เปิดบน CLI และเดสก์ท็อป และปิดบนแชทบอท
+    help_en: Stops the agent from saying code is done when nothing was run to check it.
+    help_th: กันไม่ให้เอเจนต์บอกว่าโค้ดเสร็จทั้งที่ยังไม่ได้รันอะไรเพื่อตรวจ
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: terminal.backend
+    group: terminal
+    type: choice
+    choices: ["local", "docker", "ssh", "modal", "daytona", "vercel_sandbox"]
+    default: local
+    example: local
+    title_en: Where commands run
+    title_th: คำสั่งรันที่ไหน
+    where_en: terminal.backend. local runs on this Ubuntu PC. docker, ssh, modal, daytona, and vercel_sandbox need extra accounts or software described in the configuration guide.
+    where_th: terminal.backend ค่า local รันบน Ubuntu เครื่องนี้ docker, ssh, modal, daytona และ vercel_sandbox ต้องมีบัญชีหรือโปรแกรมเพิ่มตามคู่มือการตั้งค่า
+    help_en: For this OptiPlex, local is the right value. Docker is optional and is not required to chat.
+    help_th: สำหรับ OptiPlex นี้ค่า local ถูกต้อง Docker ไม่จำเป็นและไม่ต้องมีก็แชทได้
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: terminal.cwd
+    group: terminal
+    type: str
+    example: /home/you/projects
+    placeholder: /home/you/projects
+    title_en: Gateway working directory
+    title_th: โฟลเดอร์งานของเกตเวย์
+    where_en: terminal.cwd. The CLI uses the folder where you launched it. Chat bots and cron use this path. The guide says the default when it is unset is your home directory.
+    where_th: terminal.cwd CLI ใช้โฟลเดอร์ที่คุณสั่งเปิด แชทบอทและ cron ใช้พาธนี้ คู่มือบอกว่าถ้าไม่ตั้งจะใช้โฟลเดอร์บ้าน
+    help_en: Set this to the project folder you want Telegram, Discord, or LINE to edit.
+    help_th: ตั้งเป็นโฟลเดอร์โปรเจกต์ที่อยากให้ Telegram, Discord หรือ LINE แก้ไฟล์
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: memory.memory_enabled
+    group: memory
+    type: bool
+    default: true
+    example: "true"
+    title_en: Memory on
+    title_th: เปิดความจำ
+    where_en: memory.memory_enabled in config.yaml. Default true.
+    where_th: memory.memory_enabled ใน config.yaml ค่าเริ่มต้น true
+    help_en: Lets Hermes keep notes about your work between chats.
+    help_th: ให้ Hermes จดเรื่องงานของคุณข้ามแชท
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: memory.user_profile_enabled
+    group: memory
+    type: bool
+    default: true
+    example: "true"
+    title_en: User profile on
+    title_th: เปิดโปรไฟล์ผู้ใช้
+    where_en: memory.user_profile_enabled. Default true. Stored under ~/.hermes/memories/.
+    where_th: memory.user_profile_enabled ค่าเริ่มต้น true เก็บใต้ ~/.hermes/memories/
+    help_en: A short profile of who you are (language, projects). The character cap is memory.user_char_limit.
+    help_th: โปรไฟล์สั้น ๆ ว่าคุณเป็นใคร (ภาษา โปรเจกต์) เพดานตัวอักษรคือ memory.user_char_limit
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: memory.memory_char_limit
+    group: memory
+    type: int
+    default: 2200
+    example: "2200"
+    title_en: Memory size limit
+    title_th: เพดานขนาดความจำ
+    where_en: memory.memory_char_limit. Documented default 2200 characters, about 800 tokens.
+    where_th: memory.memory_char_limit ค่าเริ่มต้นในเอกสาร 2200 ตัวอักษร ประมาณ 800 โทเคน
+    help_en: How much persistent memory is injected into the prompt.
+    help_th: ความจำถาวรถูกใส่ในพรอมต์ได้มากแค่ไหน
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: memory.user_char_limit
+    group: memory
+    type: int
+    default: 1375
+    example: "1375"
+    title_en: Profile size limit
+    title_th: เพดานขนาดโปรไฟล์
+    where_en: memory.user_char_limit. Documented default 1375 characters, about 500 tokens.
+    where_th: memory.user_char_limit ค่าเริ่มต้นในเอกสาร 1375 ตัวอักษร ประมาณ 500 โทเคน
+    help_en: Cap on the user profile text.
+    help_th: เพดานข้อความโปรไฟล์ผู้ใช้
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: memory.write_approval
+    group: memory
+    type: bool
+    default: false
+    example: "false"
+    title_en: Approve memory writes
+    title_th: ต้องอนุมัติก่อนจดความจำ
+    where_en: memory.write_approval. Default false, so the memory tool writes immediately. true stages writes for /memory approve.
+    where_th: memory.write_approval ค่าเริ่มต้น false เครื่องมือความจำจึงเขียนได้ทันที true จะพักไว้ให้สั่ง /memory approve
+    help_en: Turn on if you want to review what the agent remembers.
+    help_th: เปิดถ้าอยากดูก่อนว่าเอเจนต์จะจำอะไร
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: skills.write_approval
+    group: memory
+    type: bool
+    default: false
+    example: "false"
+    title_en: Approve skill writes
+    title_th: ต้องอนุมัติก่อนเขียนสกิล
+    where_en: skills.write_approval. Default false. true stages skill_manage writes for /skills approve.
+    where_th: skills.write_approval ค่าเริ่มต้น false ค่า true จะพักการเขียนสกิลไว้ให้สั่ง /skills approve
+    help_en: Skills are procedures the agent saves for next time.
+    help_th: สกิลคือขั้นตอนที่เอเจนต์บันทึกไว้ใช้ครั้งหน้า
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: skills.guard_agent_created
+    group: memory
+    type: bool
+    default: false
+    example: "false"
+    title_en: Scan new skills
+    title_th: สแกนสกิลที่เอเจนต์สร้าง
+    where_en: skills.guard_agent_created. Default false. true asks you before a skill that looks like it is harvesting credentials or injecting instructions is saved.
+    where_th: skills.guard_agent_created ค่าเริ่มต้น false ค่า true จะถามก่อนบันทึกสกิลที่ดูเหมือนกำลังเก็บรหัสหรือแทรกคำสั่ง
+    help_en: A keyword scan, not a full security product. Background self-review writes are scanned even when this is off.
+    help_th: เป็นการสแกนคำสำคัญ ไม่ใช่ผลิตภัณฑ์ความปลอดภัยทั้งระบบ การเขียนจากการทบทวนเบื้องหลังถูกสแกนเสมอแม้ค่านี้จะปิด
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: compression.enabled
+    group: compression
+    type: bool
+    default: true
+    example: "true"
+    title_en: Compress long chats
+    title_th: ย่อแชทที่ยาว
+    where_en: compression.enabled. Default true.
+    where_th: compression.enabled ค่าเริ่มต้น true
+    help_en: Summarises old messages so the chat fits the model's context window.
+    help_th: สรุปข้อความเก่าเพื่อให้แชทอยู่ในหน้าต่างบริบทของโมเดล
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: compression.threshold
+    group: compression
+    type: float
+    default: 0.50
+    example: "0.50"
+    title_en: When to compress
+    title_th: จุดที่เริ่มย่อ
+    where_en: compression.threshold. Default 0.50, meaning about half of the context window.
+    where_th: compression.threshold ค่าเริ่มต้น 0.50 คือประมาณครึ่งหนึ่งของหน้าต่างบริบท
+    help_en: Lower starts summarising sooner and can cost an extra model call earlier.
+    help_th: ค่ายิ่งต่ำยิ่งเริ่มสรุปเร็ว และอาจเรียกโมเดลเพิ่มเร็วขึ้น
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: compression.tail_mode
+    group: compression
+    type: choice
+    choices: ["lean", "legacy"]
+    default: lean
+    example: lean
+    title_en: What to keep after compression
+    title_th: สิ่งที่เหลือหลังย่อ
+    where_en: compression.tail_mode. lean is the default. legacy keeps a larger verbatim tail.
+    where_th: compression.tail_mode ค่า lean เป็นค่าเริ่มต้น legacy เก็บหางข้อความจริงที่ยาวกว่า
+    help_en: lean keeps fewer raw messages and a structured summary.
+    help_th: lean เก็บข้อความดิบน้อยลงและเหลือบทสรุปที่มีโครงสร้าง
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: file_read_max_chars
+    group: compression
+    type: int
+    default: 100000
+    example: "100000"
+    title_en: Max characters per file read
+    title_th: ตัวอักษรสูงสุดต่อการอ่านไฟล์
+    where_en: file_read_max_chars. Default 100000. The read_file tool errors past this and tells the agent to use offset and limit.
+    where_th: file_read_max_chars ค่าเริ่มต้น 100000 เครื่องมือ read_file จะ error เมื่อเกิน และบอกให้ใช้ offset กับ limit
+    help_en: Stops one huge file from filling the context window.
+    help_th: กันไม่ให้ไฟล์ใหญ่ไฟล์เดียวกินหน้าต่างบริบทจนหมด
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: display.language
+    group: display
+    type: choice
+    choices: ["en", "zh", "zh-hant", "ja", "de", "es", "fr", "tr", "uk", "af", "ko", "it", "ga", "pt", "ru", "hu", "ar"]
+    default: en
+    example: en
+    title_en: Hermes message language
+    title_th: ภาษาข้อความของ Hermes
+    where_en: display.language. This list is the bundled set from the configuration guide. Thai is not in that list. This wizard is bilingual; Hermes' own approval prompts stay in one of these languages. HERMES_LANGUAGE overrides it for one process.
+    where_th: display.language รายการนี้คือชุดที่มากับโปรแกรมตามคู่มือการตั้งค่า ไม่มีภาษาไทยในรายการ ตัวช่วยนี้สองภาษา แต่ข้อความอนุมัติของ Hermes เองใช้ภาษาในรายการนี้ HERMES_LANGUAGE ทับค่านี้ได้ในกระบวนการเดียว
+    help_en: Translates a few static prompts (approvals, some slash-command replies). It does not translate the model's answers. Ask the model to reply in Thai in the chat.
+    help_th: แปลพรอมต์คงที่บางส่วน (การอนุมัติ คำตอบคำสั่งทับบางคำ) ไม่ได้แปลคำตอบของโมเดล อยากให้ตอบภาษาไทยให้บอกในแชท
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: display.tool_progress
+    group: display
+    type: choice
+    choices: ["off", "new", "all", "verbose"]
+    default: all
+    example: all
+    title_en: Tool progress
+    title_th: แสดงความคืบหน้าของเครื่องมือ
+    where_en: display.tool_progress. all is the default. Cycle in the CLI with /verbose.
+    where_th: display.tool_progress ค่า all เป็นค่าเริ่มต้น ใน CLI สลับด้วย /verbose
+    help_en: How much of each tool call you see. off shows only the final answer.
+    help_th: จะเห็นการเรียกเครื่องมือมากแค่ไหน off แสดงแค่คำตอบสุดท้าย
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: display.show_reasoning
+    group: display
+    type: bool
+    default: true
+    example: "true"
+    title_en: Show reasoning
+    title_th: แสดงการคิด
+    where_en: display.show_reasoning. Default true. Toggle in chat with /reasoning show or /reasoning hide.
+    where_th: display.show_reasoning ค่าเริ่มต้น true สลับในแชทด้วย /reasoning show หรือ /reasoning hide
+    help_en: Shows the model's thinking above the answer when the model provides it.
+    help_th: แสดงสิ่งที่โมเดลคิดไว้เหนือคำตอบ เมื่อโมเดลส่งส่วนนั้นมา
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: display.streaming
+    group: display
+    type: bool
+    default: false
+    example: "false"
+    title_en: Stream tokens in the terminal
+    title_th: แสดงโทเคนทีละส่วนในเทอร์มินัล
+    where_en: display.streaming. Default false for the terminal transcript.
+    where_th: display.streaming ค่าเริ่มต้น false สำหรับข้อความในเทอร์มินัล
+    help_en: true prints the answer as it arrives in the CLI.
+    help_th: ค่า true พิมพ์คำตอบใน CLI ขณะที่มันมาถึง
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: display.show_cost
+    group: display
+    type: bool
+    default: false
+    example: "false"
+    title_en: Show estimated cost
+    title_th: แสดงค่าใช้จ่ายโดยประมาณ
+    where_en: display.show_cost. Default false.
+    where_th: display.show_cost ค่าเริ่มต้น false
+    help_en: Adds an estimated dollar cost to the CLI status bar. Useful while learning how much OpenRouter spends.
+    help_th: ใส่ค่าใช้จ่ายโดยประมาณเป็นดอลลาร์บนแถบสถานะของ CLI มีประโยชน์ตอนเรียนว่าราคา OpenRouter เป็นเท่าไร
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: security.redact_secrets
+    group: security
+    type: bool
+    default: true
+    example: "true"
+    title_en: Redact secrets in tool output
+    title_th: ปิดบังความลับในผลเครื่องมือ
+    where_en: security.redact_secrets. Default true. Leave it on.
+    where_th: security.redact_secrets ค่าเริ่มต้น true ควรเปิดไว้
+    help_en: Hermes masks values that look like API keys in tool output and logs.
+    help_th: Hermes ปิดบังค่าที่ดูเหมือนคีย์ API ในผลเครื่องมือและบันทึก
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: approvals.mode
+    group: security
+    type: choice
+    choices: ["smart", "manual", "off"]
+    default: smart
+    example: smart
+    title_en: Command approval
+    title_th: การอนุมัติคำสั่ง
+    where_en: approvals.mode. smart is the default. manual asks every time a command is flagged. off skips the checks and matches HERMES_YOLO_MODE. The wizard still refuses to write HERMES_YOLO_MODE itself.
+    where_th: approvals.mode ค่า smart เป็นค่าเริ่มต้น manual ถามทุกครั้งที่คำสั่งถูกปักธง off ข้ามการตรวจ และตรงกับ HERMES_YOLO_MODE ตัวช่วยยังปฏิเสธการเขียน HERMES_YOLO_MODE เอง
+    help_en: smart lets an auxiliary model auto-approve low-risk commands and escalates the rest. Keep smart or manual on a machine that can edit your files.
+    help_th: smart ให้โมเดลช่วยอนุมัติคำสั่งความเสี่ยงต่ำและส่งที่เหลือมาถามคุณ บนเครื่องที่แก้ไฟล์ได้ให้ใช้ smart หรือ manual
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: approvals.denial_breaker_threshold
+    group: security
+    type: int
+    default: 3
+    example: "3"
+    title_en: Stop after repeated denials
+    title_th: หยุดหลังถูกปฏิเสธซ้ำ
+    where_en: approvals.denial_breaker_threshold. Default 3. 0 disables the breaker.
+    where_th: approvals.denial_breaker_threshold ค่าเริ่มต้น 3 ค่า 0 ปิดตัวตัดนี้
+    help_en: After this many denied commands in a row, Hermes tells the agent to stop and ask you.
+    help_th: หลังคำสั่งถูกปฏิเสธติดกันครบจำนวนนี้ Hermes จะบอกเอเจนต์ให้หยุดแล้วถามคุณ
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: checkpoints.enabled
+    group: security
+    type: bool
+    default: false
+    example: "false"
+    title_en: File checkpoints
+    title_th: จุดบันทึกไฟล์
+    where_en: checkpoints.enabled. Default false. Also enabled for one chat with hermes chat --checkpoints.
+    where_th: checkpoints.enabled ค่าเริ่มต้น false เปิดเฉพาะแชทเดียวได้ด้วย hermes chat --checkpoints
+    help_en: Snapshots files before destructive edits so you can roll back.
+    help_th: ถ่ายสำเนาไฟล์ก่อนการแก้ที่ลบของ เพื่อย้อนกลับได้
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: browser.headed
+    group: browser
+    type: bool
+    default: false
+    example: "false"
+    title_en: Show the browser window
+    title_th: แสดงหน้าต่างเบราว์เซอร์
+    where_en: browser.headed. Default false, so local Chromium stays headless.
+    where_th: browser.headed ค่าเริ่มต้น false Chromium ในเครื่องจึงไม่มีหน้าต่าง
+    help_en: true opens a visible Chromium window. Useful when you want to watch what the agent clicks.
+    help_th: ค่า true เปิดหน้าต่าง Chromium ให้เห็น ใช้เมื่ออยากดูว่าเอเจนต์คลิกอะไร
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: browser.engine
+    group: browser
+    type: choice
+    choices: ["auto", "lightpanda"]
+    default: auto
+    example: auto
+    title_en: Browser engine
+    title_th: เอนจินเบราว์เซอร์
+    where_en: browser.engine. auto uses Chromium (the guide also accepts the old value chrome as auto). lightpanda is the other documented engine.
+    where_th: browser.engine ค่า auto ใช้ Chromium (คู่มือยังรับค่าเก่า chrome ให้เท่ากับ auto) lightpanda คือเอนจินอีกตัวในเอกสาร
+    help_en: Leave auto unless you installed Lightpanda on purpose.
+    help_th: ปล่อย auto ไว้ เว้นแต่คุณตั้งใจติดตั้ง Lightpanda
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: browser.inactivity_timeout
+    group: browser
+    type: int
+    default: 120
+    example: "120"
+    title_en: Close idle browser after (seconds)
+    title_th: ปิดเบราว์เซอร์ที่ว่างหลัง (วินาที)
+    where_en: browser.inactivity_timeout. Default 120 seconds.
+    where_th: browser.inactivity_timeout ค่าเริ่มต้น 120 วินาที
+    help_en: Frees RAM on this 16 GB PC by closing Chromium when the agent is idle.
+    help_th: คืนแรมบนเครื่อง 16 GB โดยปิด Chromium เมื่อเอเจนต์ว่าง
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: web.backend
+    group: browser
+    type: choice
+    choices: ["", "firecrawl", "searxng", "parallel", "tavily", "perplexity", "keenable", "exa"]
+    example: searxng
+    title_en: Web search backend
+    title_th: แบ็กเอนด์ค้นเว็บ
+    where_en: web.backend. Leave blank and Hermes can use its keyless free-tier ring when no key is set. Keys for these backends are on the API keys page (FIRECRAWL_API_KEY, TAVILY_API_KEY, EXA_API_KEY, PERPLEXITY_API_KEY, SEARXNG_URL).
+    where_th: web.backend เว้นว่างแล้ว Hermes ใช้วงชั้นฟรีแบบไม่มีคีย์ได้เมื่อไม่มีคีย์ คีย์ของแบ็กเอนด์เหล่านี้อยู่หน้าคีย์ API (FIRECRAWL_API_KEY, TAVILY_API_KEY, EXA_API_KEY, PERPLEXITY_API_KEY, SEARXNG_URL)
+    help_en: Which service answers web_search and web_extract. Nous Tool Gateway is selected with hermes tools, not by a value in this list.
+    help_th: บริการไหนตอบ web_search และ web_extract Nous Tool Gateway เลือกด้วย hermes tools ไม่ใช่ค่าในรายการนี้
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: web.keyless_fallback
+    group: browser
+    type: bool
+    default: true
+    example: "true"
+    title_en: Keyless web fallback
+    title_th: ค้นเว็บแบบไม่มีคีย์เมื่อยังไม่ได้ตั้ง
+    where_en: web.keyless_fallback. Default true.
+    where_th: web.keyless_fallback ค่าเริ่มต้น true
+    help_en: When no web backend and no web keys are configured, Hermes rotates free tiers (Exa, Parallel, Firecrawl, Keenable).
+    help_th: เมื่อยังไม่เลือกแบ็กเอนด์และยังไม่มีคีย์เว็บ Hermes จะวนชั้นฟรี (Exa, Parallel, Firecrawl, Keenable)
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: tts.provider
+    group: voice
+    type: choice
+    choices: ["edge", "elevenlabs", "openai", "minimax", "mistral", "gemini", "xai", "neutts", "kittentts", "piper", "deepinfra"]
+    default: edge
+    example: edge
+    title_en: Text-to-speech provider
+    title_th: ผู้ให้บริการอ่านออกเสียง
+    where_en: tts.provider. edge is the documented example and needs no API key. elevenlabs needs ELEVENLABS_API_KEY on the API keys page. The Edge voice example in the guide is en-US-AriaNeural (tts.edge.voice).
+    where_th: tts.provider edge คือตัวอย่างในเอกสารและไม่ต้องใช้คีย์ API elevenlabs ต้องมี ELEVENLABS_API_KEY ในหน้าคีย์ API ตัวอย่างเสียง Edge ในคู่มือคือ en-US-AriaNeural (tts.edge.voice)
+    help_en: Voice for the text_to_speech tool and spoken replies. Edge can speak Thai if you set a Thai Edge voice name in tts.edge.voice later; the guide's sample voice is English.
+    help_th: เสียงของเครื่องมือ text_to_speech และคำตอบเสียง Edge พูดไทยได้ถ้าภายหลังตั้งชื่อเสียง Edge ภาษาไทยใน tts.edge.voice ตัวอย่างในคู่มือเป็นภาษาอังกฤษ
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: tts.speed
+    group: voice
+    type: float
+    default: 1.0
+    example: "1.0"
+    title_en: Speech speed
+    title_th: ความเร็วเสียง
+    where_en: tts.speed. 1.0 is normal. Provider-specific speeds override it.
+    where_th: tts.speed ค่า 1.0 คือความเร็วปกติ ความเร็วเฉพาะผู้ให้บริการจะทับค่านี้
+    help_en: Global playback speed for speech.
+    help_th: ความเร็วเล่นเสียงรวม
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: delegation.max_concurrent_children
+    group: delegation
+    type: int
+    default: 10
+    example: "3"
+    title_en: Parallel subagents
+    title_th: จำนวนเอเจนต์ย่อยพร้อมกัน
+    where_en: delegation.max_concurrent_children. Default 10. Floor is 1.
+    where_th: delegation.max_concurrent_children ค่าเริ่มต้น 10 ต่ำสุดคือ 1
+    help_en: On a 16 GB PC, a lower number (for example 3) keeps several subagents from loading the machine at once. The parent model still runs in the cloud if you use OpenRouter.
+    help_th: บนเครื่องแรม 16 GB ค่าต่ำลง (เช่น 3) กันไม่ให้เอเจนต์ย่อยหลายตัวกินเครื่องพร้อมกัน โมเดลแม่ยังรันบนคลาวด์ถ้าใช้ OpenRouter
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: delegation.max_spawn_depth
+    group: delegation
+    type: int
+    default: 1
+    example: "1"
+    title_en: How deep subagents can nest
+    title_th: เอเจนต์ย่อยซ้อนได้กี่ชั้น
+    where_en: delegation.max_spawn_depth. Default 1 means children cannot spawn their own children.
+    where_th: delegation.max_spawn_depth ค่าเริ่มต้น 1 แปลว่าลูกสร้างลูกต่อไม่ได้
+    help_en: Leave at 1 while learning. Deeper trees multiply token cost.
+    help_th: ปล่อยที่ 1 ระหว่างเรียน ต้นไม้ที่ลึกขึ้นคูณค่าโทเคน
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: delegation.model
+    group: delegation
+    type: str
+    example: deepseek/deepseek-v4-flash-0731
+    title_en: Subagent model
+    title_th: โมเดลของเอเจนต์ย่อย
+    where_en: delegation.model. Empty inherits the parent model. The delegation guide's OpenRouter example is deepseek/deepseek-v4-flash-0731.
+    where_th: delegation.model ว่างแปลว่าใช้โมเดลของตัวแม่ ตัวอย่าง OpenRouter ในคู่มือ delegation คือ deepseek/deepseek-v4-flash-0731
+    help_en: Use a cheaper model for small subtasks if you want. Leave blank to keep one model.
+    help_th: ใช้โมเดลถูกกว่าสำหรับงานย่อยเล็ก ๆ ได้ เว้นว่างถ้าอยากใช้โมเดลเดียว
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: gateway.delivery_ledger
+    group: gateway
+    type: bool
+    default: true
+    example: "true"
+    title_en: Remember unsent replies
+    title_th: จำคำตอบที่ยังส่งไม่สำเร็จ
+    where_en: gateway.delivery_ledger. Default true. false restores the older behaviour where a crash drops an in-flight reply.
+    where_th: gateway.delivery_ledger ค่าเริ่มต้น true ค่า false กลับไปพฤติกรรมเก่าที่คำตอบค้างจะหายถ้าโปรแกรมล่ม
+    help_en: Stores chat replies until the platform confirms them, then resends after a crash.
+    help_th: เก็บคำตอบแชทจนกว่าแพลตฟอร์มจะยืนยัน แล้วส่งใหม่หลังโปรแกรมล่ม
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+
+  - key: gateway.systemd_watchdog_seconds
+    group: gateway
+    type: int
+    default: 0
+    example: "0"
+    title_en: systemd watchdog seconds
+    title_th: วินาที watchdog ของ systemd
+    where_en: gateway.systemd_watchdog_seconds. Default 0 keeps Type=simple. A positive value (the guide's example is 120) needs hermes gateway install --force afterwards so the unit is regenerated.
+    where_th: gateway.systemd_watchdog_seconds ค่าเริ่มต้น 0 คงหน่วยแบบ Type=simple ค่าบวก (ตัวอย่างในคู่มือคือ 120) ต้องรัน hermes gateway install --force ทีหลังเพื่อสร้างไฟล์หน่วยใหม่
+    help_en: Linux only. systemd restarts the gateway if heartbeats stop.
+    help_th: ใช้บนลินุกซ์ systemd จะเริ่มเกตเวย์ใหม่ถ้าสัญญาณหัวใจหยุด
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+
+  - key: discord.require_mention
+    group: gateway
+    type: bool
+    default: true
+    example: "true"
+    title_en: Discord requires an @mention
+    title_th: Discord ต้องถูก @ ก่อนตอบ
+    where_en: discord.require_mention in config.yaml. Default true. DMs still answer without a mention. DISCORD_REQUIRE_MENTION in .env is the env fallback.
+    where_th: discord.require_mention ใน config.yaml ค่าเริ่มต้น true ข้อความส่วนตัวยังตอบโดยไม่ต้องถูกกล่าวถึง DISCORD_REQUIRE_MENTION ใน .env เป็นค่าสำรอง
+    help_en: In a server channel the bot waits for @BotName. Turn off only in a channel you control.
+    help_th: ในช่องของเซิร์ฟเวอร์ บอทรอ @ชื่อบอท ปิดเฉพาะในช่องที่คุณควบคุม
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: discord.auto_thread
+    group: gateway
+    type: bool
+    default: true
+    example: "true"
+    title_en: Discord auto-threads mentions
+    title_th: Discord เปิดเธรดอัตโนมัติเมื่อถูก @
+    where_en: discord.auto_thread. Default true.
+    where_th: discord.auto_thread ค่าเริ่มต้น true
+    help_en: Mentions in a channel start a thread so the channel stays readable.
+    help_th: การถูกกล่าวถึงในช่องจะเปิดเธรด เพื่อให้ช่องอ่านง่าย
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: group_sessions_per_user
+    group: gateway
+    type: bool
+    default: true
+    example: "true"
+    title_en: Separate Discord sessions per person
+    title_th: แยกเซสชัน Discord ตามคน
+    where_en: group_sessions_per_user. Default true, documented on the Discord page. false shares one transcript for the whole channel.
+    where_th: group_sessions_per_user ค่าเริ่มต้น true ตามหน้า Discord ค่า false ใช้บทสนทนาเดียวกันทั้งช่อง
+    help_en: Leave true so two people in one channel do not share context and cost.
+    help_th: เปิดไว้เพื่อไม่ให้สองคนในช่องเดียวกันใช้บริบทและค่าใช้จ่ายร่วมกัน
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord
+
+  - key: timezone
+    group: system
+    type: str
+    example: Asia/Bangkok
+    placeholder: Asia/Bangkok
+    title_en: Timezone
+    title_th: เขตเวลา
+    where_en: timezone in config.yaml. An IANA name. Empty uses the computer's clock. HERMES_TIMEZONE in .env overrides this key when set. Asia/Bangkok is the zone for Thailand.
+    where_th: timezone ใน config.yaml เป็นชื่อ IANA ว่างแปลว่าใช้นาฬิกาของเครื่อง HERMES_TIMEZONE ใน .env ทับคีย์นี้เมื่อตั้งไว้ Asia/Bangkok คือเขตเวลาของประเทศไทย
+    help_en: Used for cron schedules and the time Hermes tells the model. Log files stay in the machine's local time.
+    help_th: ใช้กับตาราง cron และเวลาที่ Hermes บอกโมเดล ไฟล์บันทึกยังใช้เวลาท้องถิ่นของเครื่อง
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+    links:
+      - label_en: IANA time zone list
+        label_th: รายชื่อเขตเวลา IANA
+        url: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+  - key: network.force_ipv4
+    group: system
+    type: bool
+    default: false
+    example: "false"
+    title_en: Force IPv4
+    title_th: บังคับใช้ IPv4
+    where_en: network.force_ipv4. Default false. hermes doctor has an IPv6 route check that points at this key.
+    where_th: network.force_ipv4 ค่าเริ่มต้น false hermes doctor มีการตรวจเส้นทาง IPv6 ที่ชี้มาที่คีย์นี้
+    help_en: Turn on only when IPv6 on this network hangs outbound connections.
+    help_th: เปิดเมื่อ IPv6 ของเครือข่ายนี้ทำให้การเชื่อมต่อออกไปค้าง
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: updates.pre_update_backup
+    group: system
+    type: choice
+    choices: ["quick", "full", "off"]
+    default: quick
+    example: quick
+    title_en: Backup before hermes update
+    title_th: สำรองก่อน hermes update
+    where_en: updates.pre_update_backup. quick is the default (a state snapshot). full also zips HERMES_HOME. off disables both.
+    where_th: updates.pre_update_backup ค่า quick เป็นค่าเริ่มต้น (สำเนาสถานะ) full บีบอัดทั้ง HERMES_HOME ด้วย off ปิดทั้งคู่
+    help_en: Protects config and pairing data when you update Hermes itself.
+    help_th: ปกป้องคอนฟิกและข้อมูลการจับคู่ตอนอัปเดตตัว Hermes
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+
+  - key: desktop.manage_launcher_entry
+    group: system
+    type: bool
+    default: true
+    example: "true"
+    title_en: Let Hermes Desktop write its menu entry
+    title_th: ให้ Hermes Desktop เขียนรายการเมนูเอง
+    where_en: desktop.manage_launcher_entry. Set false to keep a hand-edited ~/.local/share/applications/hermes.desktop. A missing entry is still created.
+    where_th: desktop.manage_launcher_entry ตั้ง false เพื่อคงไฟล์ ~/.local/share/applications/hermes.desktop ที่แก้เอง รายการที่หายไปยังถูกสร้างใหม่
+    help_en: Unrelated to this wizard's own menu entry.
+    help_th: คนละไฟล์กับรายการเมนูของตัวช่วยนี้
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/desktop
+
+  - key: onboarding.profile_build
+    group: system
+    type: choice
+    choices: ["ask", "off"]
+    default: ask
+    example: ask
+    title_en: First-message profile offer
+    title_th: ข้อเสนอสร้างโปรไฟล์ในข้อความแรก
+    where_en: onboarding.profile_build. ask is the default. off skips the offer. The agent still introduces itself.
+    where_th: onboarding.profile_build ค่า ask เป็นค่าเริ่มต้น off ข้ามข้อเสนอ เอเจนต์ยังแนะนำตัว
+    help_en: On the first direct message, Hermes can offer to build a user profile. It asks before any lookup.
+    help_th: ในข้อความส่วนตัวครั้งแรก Hermes อาจเสนอสร้างโปรไฟล์ผู้ใช้ มันถามก่อนค้นอะไร
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/configuration

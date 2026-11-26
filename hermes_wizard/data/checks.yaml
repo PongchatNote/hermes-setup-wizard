@@ -1,0 +1,84 @@
+# Final-page checks. fix_page is a sidebar id, optionally install:<step-id>.
+# https://hermes-agent.nousresearch.com/docs/getting-started/installation
+# https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+# https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+
+checks:
+  - id: hermes-cli
+    title_en: Hermes command
+    title_th: คำสั่ง hermes
+    kind: command
+    fix_page: install:install-hermes
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      if [ ! -x "$HOME/.local/bin/hermes" ]; then
+        echo "missing $HOME/.local/bin/hermes"
+        exit 1
+      fi
+      hermes --version || hermes version
+
+  - id: config-yaml
+    title_en: config.yaml has a provider and model
+    title_th: config.yaml มีผู้ให้บริการและโมเดล
+    kind: config
+    fix_page: settings:model
+    detail_en: Reads ~/.hermes/config.yaml. Secrets in that file are not printed.
+    detail_th: อ่าน ~/.hermes/config.yaml ไม่พิมพ์ความลับในไฟล์นั้น
+
+  - id: env-mode
+    title_en: ~/.hermes/.env is mode 0600
+    title_th: ไฟล์ ~/.hermes/.env มีสิทธิ์ 0600
+    kind: env_mode
+    fix_page: secrets
+
+  - id: openrouter
+    title_en: OpenRouter accepts the API key
+    title_th: OpenRouter รับคีย์ API
+    kind: openrouter
+    fix_page: secrets
+    detail_en: >
+      GET https://openrouter.ai/api/v1/key with the stored OPENROUTER_API_KEY.
+      The key is not printed.
+    detail_th: >
+      เรียก GET https://openrouter.ai/api/v1/key ด้วย OPENROUTER_API_KEY ที่เก็บไว้
+      ไม่พิมพ์คีย์
+
+  - id: gateway
+    title_en: Messaging gateway status
+    title_th: สถานะเกตเวย์ข้อความ
+    kind: command
+    optional: true
+    fix_page: install:gateway-start
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      hermes gateway status
+
+  - id: telegram
+    title_en: Telegram bot token
+    title_th: โทเคนบอท Telegram
+    kind: telegram
+    optional: true
+    fix_page: gateway:telegram
+
+  - id: discord
+    title_en: Discord bot token
+    title_th: โทเคนบอท Discord
+    kind: discord
+    optional: true
+    fix_page: gateway:discord
+
+  - id: line
+    title_en: LINE channel access token
+    title_th: โทเคนช่อง LINE
+    kind: line
+    optional: true
+    fix_page: gateway:line
+
+  - id: slack
+    title_en: Slack bot token
+    title_th: โทเคนบอท Slack
+    kind: slack
+    optional: true
+    fix_page: gateway:slack

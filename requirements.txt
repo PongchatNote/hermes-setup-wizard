@@ -1,0 +1,4 @@
+PySide6>=6.6
+PyYAML>=6
+keyring>=25
+secretstorage>=3.3
