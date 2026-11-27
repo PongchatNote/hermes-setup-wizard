@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QComboBox,
     QHBoxLayout,
@@ -11,7 +15,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QPlainTextEdit,
     QPushButton,
+    QRadioButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
@@ -39,7 +45,8 @@ from hermes_wizard.gui.widgets import CopyButton, Explain, FieldBlock, SecretEdi
 from hermes_wizard.gui.workers import CallThread, InstallThread
 from hermes_wizard.health import run_checks
 from hermes_wizard.i18n import join
-from hermes_wizard.paths import config_path, env_path, repo_root
+from hermes_wizard.paths import config_path, env_path, hermes_home, repo_root
+from hermes_wizard.runtime import backup_home, cli_chat_argv, flow_pages, restore_home, update_hermes_commands
 from hermes_wizard.provider_test import fetch_model_ids, probe_gateway, probe_provider
 from hermes_wizard.redact import redact_mapping_preview
 from hermes_wizard.updater import pull_ff_only
@@ -60,11 +67,107 @@ class LanguageMixin:
         self.mode = mode
 
 
+class ChoiceBar(QWidget, LanguageMixin):
+    """Full/Quick, the one Quick bot, and Native/Docker. Defaults stay Full and Native."""
+
+    changed = Signal()
+
+    def __init__(self, session):
+        super().__init__()
+        self.session = session
+        self._guard = False
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.profile_label = QLabel()
+        self.full = QRadioButton()
+        self.quick = QRadioButton()
+        self.profile_group = QButtonGroup(self)
+        self.profile_group.addButton(self.full)
+        self.profile_group.addButton(self.quick)
+        self.bot_label = QLabel()
+        self.bot_row = QWidget()
+        bot_layout = QHBoxLayout(self.bot_row)
+        bot_layout.setContentsMargins(0, 0, 0, 0)
+        self.bots = {}
+        self.bot_group = QButtonGroup(self)
+        for bot_id in ("telegram", "discord", "line"):
+            button = QRadioButton(bot_id)
+            self.bots[bot_id] = button
+            self.bot_group.addButton(button)
+            bot_layout.addWidget(button)
+        bot_layout.addStretch(1)
+        self.mode_label = QLabel()
+        self.native = QRadioButton()
+        self.docker = QRadioButton()
+        self.mode_group = QButtonGroup(self)
+        self.mode_group.addButton(self.native)
+        self.mode_group.addButton(self.docker)
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        layout.addWidget(self.profile_label)
+        layout.addWidget(self.full)
+        layout.addWidget(self.quick)
+        layout.addWidget(self.bot_label)
+        layout.addWidget(self.bot_row)
+        layout.addWidget(self.mode_label)
+        layout.addWidget(self.native)
+        layout.addWidget(self.docker)
+        layout.addWidget(self.note)
+        self.profile_group.buttonClicked.connect(lambda _button: self._save())
+        self.bot_group.buttonClicked.connect(lambda _button: self._save())
+        self.mode_group.buttonClicked.connect(lambda _button: self._save())
+        self.apply_language("both")
+
+    def apply_language(self, mode: str) -> None:
+        super().apply_language(mode)
+        self.profile_label.setText(join("How much to set up", "จะตั้งค่ามากแค่ไหน", mode))
+        self.full.setText(join("Full setup (default)", "ตั้งค่าทั้งหมด (ค่าเริ่มต้น)", mode))
+        self.quick.setText(join("Quick setup", "ตั้งค่าแบบย่อ", mode))
+        self.bot_label.setText(join("Quick setup uses this one bot", "แบบย่อใช้บอทตัวนี้ตัวเดียว", mode))
+        self.mode_label.setText(join("How to install Hermes", "วิธีติดตั้ง Hermes", mode))
+        self.native.setText(join("Native install.sh (default)", "ติดตั้งด้วย install.sh (ค่าเริ่มต้น)", mode))
+        self.docker.setText(join("Docker image nousresearch/hermes-agent", "อิมเมจ Docker nousresearch/hermes-agent", mode))
+        self.note.setText(
+            join(
+                "Full setup is every page. Quick setup is install, the provider, one test chat, the bot you pick, and the final check. You can switch later. Native is the current source install. Docker uses the official image and mounts ~/.hermes at /opt/data.",
+                "ตั้งค่าทั้งหมดคือทุกหน้า แบบย่อคือติดตั้ง ผู้ให้บริการ แชททดลองหนึ่งครั้ง บอทที่เลือก และตรวจครั้งสุดท้าย สลับทีหลังได้ แบบในเครื่องคือการติดตั้งจากซอร์สแบบเดิม Docker ใช้อิมเมจทางการและเมานต์ ~/.hermes ที่ /opt/data",
+                mode,
+            )
+        )
+        self._load()
+
+    def _load(self) -> None:
+        data = self.session.progress
+        self._guard = True
+        (self.quick if data.get("setup_profile") == "quick" else self.full).setChecked(True)
+        bot = data.get("quick_bot") or "telegram"
+        self.bots.get(bot, self.bots["telegram"]).setChecked(True)
+        (self.docker if data.get("install_mode") == "docker" else self.native).setChecked(True)
+        self.bot_label.setVisible(self.quick.isChecked())
+        self.bot_row.setVisible(self.quick.isChecked())
+        self._guard = False
+
+    def _save(self) -> None:
+        if self._guard:
+            return
+        self.session.progress["setup_profile"] = "quick" if self.quick.isChecked() else "full"
+        for bot_id, button in self.bots.items():
+            if button.isChecked():
+                self.session.progress["quick_bot"] = bot_id
+        self.session.progress["install_mode"] = "docker" if self.docker.isChecked() else "native"
+        progress.save(self.session.progress)
+        self.bot_label.setVisible(self.quick.isChecked())
+        self.bot_row.setVisible(self.quick.isChecked())
+        self.changed.emit()
+        self.session.profile_changed.emit()
+
+
 class WelcomePage(QWidget, LanguageMixin):
     open_page = Signal(str)
 
-    def __init__(self):
+    def __init__(self, session):
         super().__init__()
+        self.session = session
         root = QVBoxLayout(self)
         inner = QWidget()
         layout = QVBoxLayout(inner)
@@ -72,10 +175,12 @@ class WelcomePage(QWidget, LanguageMixin):
         self.title.setObjectName("title")
         self.lead = QLabel()
         self.lead.setWordWrap(True)
+        self.choices = ChoiceBar(session)
         self.steps = QLabel()
         self.steps.setWordWrap(True)
         frame, body = card()
         body.addWidget(self.lead)
+        body.addWidget(self.choices)
         body.addWidget(self.steps)
         self.start = QPushButton()
         self.start.clicked.connect(lambda: self.open_page.emit("install"))
@@ -86,6 +191,7 @@ class WelcomePage(QWidget, LanguageMixin):
         layout.addWidget(self.path_copy, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addStretch(1)
         root.addWidget(_scroll(inner))
+        self.choices.changed.connect(lambda: self.apply_language(self.mode))
         self.apply_language("both")
 
     def apply_language(self, mode: str) -> None:
@@ -102,15 +208,12 @@ class WelcomePage(QWidget, LanguageMixin):
                 mode,
             )
         )
-        self.steps.setText(
-            join(
-                "Order: 1) Install  2) Provider and model  3) Telegram  4) Discord  5) LINE  6) Final check.\n"
-                "Chat bots are optional. OpenRouter plus a DeepSeek model is the path that fits a PC with no GPU.",
-                "ลำดับ: 1) ติดตั้ง  2) ผู้ให้บริการและโมเดล  3) Telegram  4) Discord  5) LINE  6) ตรวจครั้งสุดท้าย\n"
-                "แชทบอทไม่บังคับ OpenRouter กับโมเดล DeepSeek คือทางที่เหมาะกับเครื่องที่ไม่มี GPU",
-                mode,
-            )
+        pages = flow_pages(
+            self.session.progress.get("setup_profile") or "full",
+            self.session.progress.get("quick_bot") or "telegram",
         )
+        self.steps.setText(join("Order: ", "ลำดับ: ", mode) + " → ".join(pages))
+        self.choices.apply_language(mode)
         self.start.setText(join("Go to install", "ไปหน้าติดตั้ง", mode))
         self.path_copy.apply_language(mode)
 
@@ -127,6 +230,8 @@ class InstallPage(QWidget, LanguageMixin):
         layout = QVBoxLayout(inner)
         self.title = QLabel()
         self.title.setObjectName("title")
+        self.choices = ChoiceBar(session)
+        self.choices.changed.connect(lambda: self.apply_language(self.mode))
         self.intro = Explain()
         self.intro.set_copy(
             help_en="Each button runs one step from the official Hermes install guide. Required steps are the Ubuntu check, the named apt packages, the official install.sh, and a check that hermes starts. Desktop, the gateway service, linger, and the AppArmor profile are optional.",
@@ -148,6 +253,7 @@ class InstallPage(QWidget, LanguageMixin):
         buttons.addWidget(self.stop)
         buttons.addStretch(1)
         layout.addWidget(self.title)
+        layout.addWidget(self.choices)
         layout.addWidget(self.intro)
         layout.addWidget(self.pkexec)
         layout.addLayout(buttons)
@@ -179,7 +285,7 @@ class InstallPage(QWidget, LanguageMixin):
             body.addWidget(explain)
             body.addLayout(row)
             layout.addWidget(frame)
-            self._rows[step.id] = (title, summary, status, run, explain)
+            self._rows[step.id] = (title, summary, status, run, explain, frame)
         layout.addStretch(1)
         root.addWidget(_scroll(inner))
         self._refresh_status()
@@ -188,7 +294,9 @@ class InstallPage(QWidget, LanguageMixin):
     def apply_language(self, mode: str) -> None:
         super().apply_language(mode)
         self.title.setText(join("Install", "ติดตั้ง", mode))
+        self.choices.apply_language(mode)
         self.intro.apply_language(mode)
+        install_mode = self.session.progress.get("install_mode") or "native"
         self.pkexec.setText(
             join(
                 "Use the system password dialog (pkexec) for apt steps when it is available",
@@ -200,7 +308,8 @@ class InstallPage(QWidget, LanguageMixin):
         self.stop.setText(join("Stop", "หยุด", mode))
         saved = self.session.progress
         for step in self.steps:
-            title, summary, status, run, explain = self._rows[step.id]
+            title, summary, status, run, explain, frame = self._rows[step.id]
+            frame.setVisible(install_mode in step.modes)
             mark = join("optional", "ไม่บังคับ", mode) if step.optional else join("required", "จำเป็น", mode)
             title.setText(f"{join(step.title_en, step.title_th, mode)}  ·  {mark}")
             summary.setText(join(step.summary_en, step.summary_th, mode))
@@ -215,7 +324,10 @@ class InstallPage(QWidget, LanguageMixin):
         self.apply_language(self.mode)
 
     def _run_required(self) -> None:
-        self._start([step for step in self.steps if not step.optional])
+        install_mode = self.session.progress.get("install_mode") or "native"
+        self._start(
+            [step for step in self.steps if not step.optional and install_mode in step.modes]
+        )
 
     def _run_one(self, step_id: str) -> None:
         self._start([step for step in self.steps if step.id == step_id])
@@ -478,6 +590,91 @@ class ProviderPage(QWidget, LanguageMixin):
                 self.model.setCurrentText(current)
 
 
+class CliChatPage(QWidget, LanguageMixin):
+    def __init__(self, session):
+        super().__init__()
+        self.session = session
+        self._thread: CallThread | None = None
+        root = QVBoxLayout(self)
+        inner = QWidget()
+        layout = QVBoxLayout(inner)
+        self.title = QLabel()
+        self.title.setObjectName("title")
+        self.explain = Explain()
+        self.explain.set_copy(
+            help_en="Sends one short prompt and shows the reply before you set up Telegram, Discord, or LINE. Native mode runs hermes chat -q, which the docs describe as a one-shot chat. Docker mode runs docker run --rm -v ~/.hermes:/opt/data nousresearch/hermes-agent chat -q, the entrypoint form the Docker guide lists. The prompt is one line and is not a secret. Save the provider first so this call has a key.",
+            help_th="ส่งพรอมต์สั้นหนึ่งครั้งและแสดงคำตอบ ก่อนตั้ง Telegram, Discord หรือ LINE โหมดในเครื่องรัน hermes chat -q ซึ่งเอกสารบอกว่าเป็นแชทครั้งเดียว โหมด Docker รัน docker run --rm -v ~/.hermes:/opt/data nousresearch/hermes-agent chat -q ตามรูปแบบที่คู่มือ Docker ระบุ พรอมต์เป็นบรรทัดเดียวและไม่ใช่ความลับ บันทึกผู้ให้บริการก่อน เพื่อให้การเรียกนี้มีคีย์",
+            where_en="https://hermes-agent.nousresearch.com/docs/user-guide/docker",
+            where_th="https://hermes-agent.nousresearch.com/docs/user-guide/docker",
+        )
+        self.prompt = QLineEdit("Reply with exactly: pong")
+        self.run = QPushButton()
+        self.run.clicked.connect(self._run)
+        self.output = QPlainTextEdit()
+        self.output.setReadOnly(True)
+        self.result = QLabel()
+        self.result.setWordWrap(True)
+        layout.addWidget(self.title)
+        layout.addWidget(self.explain)
+        layout.addWidget(self.prompt)
+        layout.addWidget(self.run, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.result)
+        layout.addWidget(self.output)
+        root.addWidget(_scroll(inner))
+        self.apply_language("both")
+
+    def apply_language(self, mode: str) -> None:
+        super().apply_language(mode)
+        self.title.setText(join("Test CLI chat", "ทดลองแชทบรรทัดคำสั่ง", mode))
+        self.explain.apply_language(mode)
+        self.run.setText(join("Send test prompt", "ส่งพรอมต์ทดสอบ", mode))
+
+    def _run(self) -> None:
+        mode = self.session.progress.get("install_mode") or "native"
+        prompt = self.prompt.text()
+
+        def work():
+            import subprocess
+
+            argv = cli_chat_argv(mode, prompt, home=hermes_home())
+            completed = subprocess.run(
+                argv,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=__import__("hermes_wizard.paths", fromlist=["command_env"]).command_env(),
+            )
+            text = ((completed.stdout or "") + (completed.stderr or "")).strip()
+            return completed.returncode, text
+
+        self.result.setText(join("Waiting for Hermes…", "กำลังรอ Hermes…", self.mode))
+        self._thread = CallThread(work)
+        self._thread.succeeded.connect(self._done)
+        self._thread.failed.connect(self._failed)
+        self._thread.start()
+
+    def _done(self, payload) -> None:
+        code, text = payload
+        from hermes_wizard.redact import redact
+
+        shown = redact(text)[:8000]
+        self.output.setPlainText(shown)
+        status = "ok" if code == 0 and shown else "failed"
+        progress.set_step(self.session.progress, "cli-chat", status, f"exit {code}")
+        progress.save(self.session.progress)
+        self.result.setText("ok" if status == "ok" else f"exit {code}")
+        self.session.log(f"CLI chat {status}")
+        self.session.profile_changed.emit()
+
+    def _failed(self, message: str) -> None:
+        progress.set_step(self.session.progress, "cli-chat", "failed", message)
+        progress.save(self.session.progress)
+        self.result.setText(message)
+        self.session.log(message)
+        self.session.profile_changed.emit()
+
+
 class GatewayPage(QWidget, LanguageMixin):
     def __init__(self, session, gateway: Gateway):
         super().__init__()
@@ -490,6 +687,9 @@ class GatewayPage(QWidget, LanguageMixin):
         layout = QVBoxLayout(inner)
         self.title = QLabel()
         self.title.setObjectName("title")
+        self.cli_warning = QLabel()
+        self.cli_warning.setWordWrap(True)
+        self.cli_warning.setStyleSheet("background:#fef3c7;padding:8px;border-radius:6px;")
         self.banner = QLabel()
         self.banner.setWordWrap(True)
         self.steps = QLabel()
@@ -511,6 +711,7 @@ class GatewayPage(QWidget, LanguageMixin):
         self.setup_copy = CopyButton("hermes gateway setup", "Copy gateway setup command", "คัดลอกคำสั่งตั้งเกตเวย์")
         self.start_copy = CopyButton("hermes gateway start", "Copy start command", "คัดลอกคำสั่งเริ่มเกตเวย์")
         layout.addWidget(self.title)
+        layout.addWidget(self.cli_warning)
         layout.addWidget(self.banner)
         layout.addWidget(self.steps)
         layout.addWidget(self.doc_copy, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -548,6 +749,15 @@ class GatewayPage(QWidget, LanguageMixin):
         super().apply_language(mode)
         gate = self.gateway
         self.title.setText(join(gate.title_en, gate.title_th, mode))
+        passed = progress.step_status(self.session.progress, "cli-chat") == "ok"
+        self.cli_warning.setVisible(not passed)
+        self.cli_warning.setText(
+            join(
+                "The CLI test chat has not passed yet. Open Test CLI chat and send the prompt before relying on this bot.",
+                "แชททดลองบรรทัดคำสั่งยังไม่ผ่าน เปิดหน้าทดลองแชทแล้วส่งพรอมต์ก่อนพึ่งบอทนี้",
+                mode,
+            )
+        )
         self.banner.setText(join(gate.banner_en, gate.banner_th, mode))
         self.steps.setText(join(gate.steps_en, gate.steps_th, mode))
         self.enabled.setText(join(f"Enable {gate.title_en}", f"เปิดใช้ {gate.title_th}", mode))
@@ -825,9 +1035,10 @@ class HealthPage(QWidget, LanguageMixin):
 
     def _run(self) -> None:
         checks = self.checks
+        install_mode = self.session.progress.get("install_mode") or "native"
 
         def work():
-            return run_checks(checks)
+            return run_checks(checks, install_mode=install_mode)
 
         self._thread = CallThread(work)
         self._thread.succeeded.connect(self._show)
@@ -901,13 +1112,34 @@ class UpdatesPage(QWidget, LanguageMixin):
         )
         self.pull = QPushButton()
         self.pull.clicked.connect(self._pull)
+        self.hermes_update = QPushButton()
+        self.hermes_update.clicked.connect(self._update_hermes)
         self.copy = CopyButton("hermes update", "Copy hermes update", "คัดลอก hermes update")
+        self.backup_explain = Explain()
+        self.backup_explain.set_copy(
+            help_en="The archive is a timestamped tar.gz of ~/.hermes. It contains API keys and bot tokens. The file mode is 0600. Keep it on this PC. Restore replaces the current ~/.hermes directory.",
+            help_th="ไฟล์สำรองคือ tar.gz ตามเวลาของ ~/.hermes ข้างในมีคีย์ API และโทเคนบอท สิทธิ์ไฟล์เป็น 0600 เก็บไว้บนเครื่องนี้ การกู้คืนจะแทนที่โฟลเดอร์ ~/.hermes ปัจจุบัน",
+        )
+        self.backup = QPushButton()
+        self.backup.setProperty("secondary", True)
+        self.backup.clicked.connect(self._backup)
+        self.restore_path = QLineEdit()
+        self.restore_path.setPlaceholderText("/home/you/hermes-backups/hermes-YYYYMMDD-HHMMSS.tar.gz")
+        self.restore = QPushButton()
+        self.restore.setProperty("secondary", True)
+        self.restore.clicked.connect(self._restore)
         self.result = QLabel()
         self.result.setWordWrap(True)
+        self._thread: CallThread | None = None
         layout.addWidget(self.title)
         layout.addWidget(self.explain)
+        layout.addWidget(self.hermes_update, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.pull, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.copy, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.backup_explain)
+        layout.addWidget(self.backup, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.restore_path)
+        layout.addWidget(self.restore, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.result)
         layout.addStretch(1)
         root.addWidget(_scroll(inner))
@@ -917,13 +1149,99 @@ class UpdatesPage(QWidget, LanguageMixin):
         super().apply_language(mode)
         self.title.setText(join("Updates", "อัปเดต", mode))
         self.explain.apply_language(mode)
-        self.pull.setText(join("Check for wizard updates (git pull)", "ตรวจอัปเดตตัวช่วย (git pull)", mode))
+        self.backup_explain.apply_language(mode)
+        install_mode = self.session.progress.get("install_mode") or "native"
+        if install_mode == "docker":
+            self.hermes_update.setText(
+                join(
+                    "Update Hermes (docker pull and recreate)",
+                    "อัปเดต Hermes (docker pull แล้วสร้างคอนเทนเนอร์ใหม่)",
+                    mode,
+                )
+            )
+        else:
+            self.hermes_update.setText(join("Update Hermes (hermes update)", "อัปเดต Hermes (hermes update)", mode))
+        self.pull.setText(join("Update this wizard (git pull)", "อัปเดตตัวช่วยนี้ (git pull)", mode))
+        self.backup.setText(join("Back up ~/.hermes", "สำรอง ~/.hermes", mode))
+        self.restore.setText(join("Restore from the archive path", "กู้คืนจากพาธไฟล์สำรอง", mode))
         self.copy.apply_language(mode)
 
     def _pull(self) -> None:
         result = pull_ff_only(repo_root())
         self.result.setText(result.summary + ("\n" + result.output if result.output else ""))
         self.session.log(result.summary)
+
+    def _update_hermes(self) -> None:
+        mode = self.session.progress.get("install_mode") or "native"
+        home = hermes_home()
+        commands = update_hermes_commands(mode, home=home, uid=os.getuid(), gid=os.getgid())
+
+        def work():
+            import subprocess
+
+            from hermes_wizard.paths import command_env
+
+            chunks = []
+            for argv in commands:
+                completed = subprocess.run(
+                    argv,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=600,
+                    env=command_env(),
+                )
+                chunks.append("$ " + " ".join(argv[:6]))
+                chunks.append(((completed.stdout or "") + (completed.stderr or "")).strip())
+                if completed.returncode != 0:
+                    return completed.returncode, "\n".join(chunks)
+            return 0, "\n".join(chunks)
+
+        self._run_background(work)
+
+    def _backup(self) -> None:
+        home = hermes_home()
+        dest = Path.home() / "hermes-backups"
+
+        def work():
+            path = backup_home(home, dest)
+            return 0, str(path)
+
+        self._run_background(work)
+
+    def _restore(self) -> None:
+        archive = Path(self.restore_path.text().strip())
+        answer = QMessageBox.question(
+            self,
+            "restore",
+            join(
+                "Replace ~/.hermes with this archive? It overwrites config and keys.",
+                "แทนที่ ~/.hermes ด้วยไฟล์นี้ไหม มันจะเขียนทับคอนฟิกและคีย์",
+                self.mode,
+            ),
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        def work():
+            restore_home(archive, hermes_home())
+            return 0, f"restored {archive.name}"
+
+        self._run_background(work)
+
+    def _run_background(self, work) -> None:
+        from hermes_wizard.redact import redact
+
+        self.result.setText(join("Working…", "กำลังทำ…", self.mode))
+        self._thread = CallThread(work)
+        self._thread.succeeded.connect(lambda payload: self._show_job(payload, redact))
+        self._thread.failed.connect(lambda message: self.result.setText(message))
+        self._thread.start()
+
+    def _show_job(self, payload, redact) -> None:
+        code, text = payload
+        self.result.setText(redact(text)[:4000])
+        self.session.log("update/backup finished" if code == 0 else "update/backup failed")
 
 
 def _safe_config():

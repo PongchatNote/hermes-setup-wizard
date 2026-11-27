@@ -49,6 +49,7 @@ class Step:
     where_th: str = ""
     example: str = ""
     links: list[Link] = field(default_factory=list)
+    modes: list[str] = field(default_factory=lambda: ["native"])
 
 
 @dataclass
@@ -109,6 +110,7 @@ class Gateway:
     token_key: str = ""
     banner_en: str = ""
     banner_th: str = ""
+    allowlist_any: list[str] = field(default_factory=list)
     fields: list[GatewayField] = field(default_factory=list)
 
 
@@ -123,10 +125,12 @@ class Check:
     shell: str = ""
     detail_en: str = ""
     detail_th: str = ""
+    args: list[str] = field(default_factory=list)
+    ports: list[int] = field(default_factory=list)
 
 
-# Sidebar order for the path the owner follows. Other pages hang off this.
-MAIN_FLOW = ("install", "provider", "telegram", "discord", "line", "health")
+# Full setup path. Quick setup is a shorter list from flow_pages().
+MAIN_FLOW = ("install", "provider", "cli-chat", "telegram", "discord", "line", "health")
 
 
 def _links(raw: Any) -> list[Link]:
@@ -182,6 +186,7 @@ def load_steps(root: Path | None = None) -> list[Step]:
                 fix_hint_en=str(item.get("fix_hint_en", "")).strip(),
                 fix_hint_th=str(item.get("fix_hint_th", "")).strip(),
                 command_hint=str(item.get("command_hint", "")).strip(),
+                modes=[str(mode) for mode in (item.get("modes") or ["native"])],
                 **_hint_from(item),
             )
         )
@@ -191,6 +196,8 @@ def load_steps(root: Path | None = None) -> list[Step]:
     for step in steps:
         if step.privilege not in {"none", "root", "sudo-cache"}:
             raise ValueError(f"step {step.id} has unknown privilege {step.privilege}")
+        if not step.modes or any(mode not in {"native", "docker"} for mode in step.modes):
+            raise ValueError(f"step {step.id} has an unknown install mode")
         if not step.shell:
             raise ValueError(f"step {step.id} has no shell")
     return steps
@@ -298,6 +305,7 @@ def load_gateways(root: Path | None = None) -> list[Gateway]:
                 token_key=str(item.get("token_key", "")),
                 banner_en=str(item.get("banner_en", "")).strip(),
                 banner_th=str(item.get("banner_th", "")).strip(),
+                allowlist_any=[str(key) for key in (item.get("allowlist_any") or [])],
                 fields=fields,
             )
         )
@@ -317,6 +325,8 @@ def load_checks(root: Path | None = None) -> list[Check]:
             shell=str(item.get("shell", "")).strip(),
             detail_en=str(item.get("detail_en", "")).strip(),
             detail_th=str(item.get("detail_th", "")).strip(),
+            args=[str(part) for part in (item.get("args") or [])],
+            ports=[int(port) for port in (item.get("ports") or [])],
         )
         for item in raw
     ]

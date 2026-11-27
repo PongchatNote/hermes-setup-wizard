@@ -55,7 +55,7 @@ def memory_keyring():
 
 
 def test_main_flow_order():
-    assert MAIN_FLOW == ("install", "provider", "telegram", "discord", "line", "health")
+    assert MAIN_FLOW == ("install", "provider", "cli-chat", "telegram", "discord", "line", "health")
 
 
 def test_catalogs_load_and_are_bilingual():

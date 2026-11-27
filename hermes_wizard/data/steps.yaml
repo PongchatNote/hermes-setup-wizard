@@ -9,6 +9,7 @@ steps:
     title_th: ตรวจ Ubuntu
     privilege: none
     optional: false
+    modes: [native, docker]
     source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
     summary_en: >
       Confirm this is Linux and read /etc/os-release. The wizard targets Ubuntu
@@ -275,3 +276,135 @@ steps:
         exit 1
       fi
       sudo -n env PATH="$PATH" HOME="$HOME" hermes desktop --install-apparmor-profile
+
+  - id: install-docker
+    title_en: Install Docker Engine
+    title_th: ติดตั้ง Docker Engine
+    privilege: root
+    optional: false
+    modes: [docker]
+    source: https://docs.docker.com/engine/install/ubuntu/
+    command_hint: "https://docs.docker.com/engine/install/ubuntu/"
+    summary_en: >
+      If docker is already on PATH, this step stops. Otherwise it follows
+      Docker's Ubuntu instructions: the key from
+      https://download.docker.com/linux/ubuntu/gpg, the stable apt repo, then
+      docker-ce, docker-ce-cli, containerd.io, and the buildx and compose
+      plugins. It does not remove a Docker you already installed.
+    summary_th: >
+      ถ้ามีคำสั่ง docker อยู่แล้ว ขั้นตอนนี้จบ ถ้ายังไม่มี มันทำตามวิธีติดตั้งบน
+      Ubuntu ของ Docker คือคีย์จาก https://download.docker.com/linux/ubuntu/gpg
+      ที่เก็บ apt สาขา stable แล้วติดตั้ง docker-ce, docker-ce-cli, containerd.io
+      และปลั๊กอิน buildx กับ compose มันไม่ลบ Docker ที่ติดตั้งไว้แล้ว
+    shell: |
+      set -euo pipefail
+      if command -v docker >/dev/null 2>&1; then
+        echo "Docker is already on PATH: $(command -v docker)"
+        docker --version || true
+        exit 0
+      fi
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y ca-certificates curl
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      . /etc/os-release
+      codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+      arch="$(dpkg --print-architecture)"
+      echo "deb [arch=${arch} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${codename} stable" > /etc/apt/sources.list.d/docker.list
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      systemctl enable --now docker || true
+      docker --version
+
+  - id: docker-group
+    title_en: Let your user run Docker
+    title_th: ให้ผู้ใช้รัน Docker ได้
+    privilege: root
+    optional: false
+    modes: [docker]
+    source: https://docs.docker.com/engine/install/linux-postinstall/
+    summary_en: >
+      Adds the desktop user to the docker group, which is Docker's post-install
+      step. A new login is required before an ordinary terminal can run docker
+      without sudo. Until you log out and back in, this wizard runs docker
+      through sudo. The docker group can control the Docker daemon, so it is
+      similar to administrator access on this PC.
+    summary_th: >
+      เพิ่มผู้ใช้เดสก์ท็อปเข้ากลุ่ม docker ตามขั้นตอนหลังติดตั้งของ Docker
+      ต้องออกจากระบบแล้วเข้าใหม่ เทอร์มินัลธรรมดาถึงจะรัน docker โดยไม่ใช้ sudo
+      ระหว่างนั้นตัวช่วยรัน docker ผ่าน sudo กลุ่ม docker ควบคุมดีมอน Docker ได้
+      จึงใกล้เคียงสิทธิ์ผู้ดูแลบนเครื่องนี้
+    shell: |
+      set -euo pipefail
+      target="${SUDO_USER:-$USER}"
+      if [ -z "$target" ] || [ "$target" = "root" ]; then
+        echo "Could not see the desktop user (SUDO_USER)." >&2
+        exit 1
+      fi
+      usermod -aG docker "$target"
+      echo "Added ${target} to group docker."
+      echo "Log out and back in before a new terminal can run docker without sudo."
+      id "$target"
+
+  - id: docker-pull
+    title_en: Pull the Hermes image
+    title_th: ดึงอิมเมจ Hermes
+    privilege: sudo-cache
+    optional: false
+    modes: [docker]
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/docker
+    command_hint: "docker pull nousresearch/hermes-agent:latest"
+    summary_en: >
+      docker pull nousresearch/hermes-agent:latest. The Docker guide's stable
+      tag is latest. The image does not include the Electron desktop app.
+    summary_th: >
+      docker pull nousresearch/hermes-agent:latest แท็ก stable ในคู่มือ Docker
+      คือ latest อิมเมจนี้ไม่มีแอป Electron
+    shell: |
+      set -euo pipefail
+      sudo -n docker pull nousresearch/hermes-agent:latest
+
+  - id: docker-gateway
+    title_en: Start the Hermes container
+    title_th: เริ่มคอนเทนเนอร์ Hermes
+    privilege: sudo-cache
+    optional: false
+    modes: [docker]
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/docker
+    command_hint: "docker run -d --name hermes --restart unless-stopped -v ~/.hermes:/opt/data nousresearch/hermes-agent gateway run"
+    summary_en: >
+      Creates ~/.hermes and starts nousresearch/hermes-agent with that directory
+      mounted at /opt/data, which is the documented data volume. The container
+      name is hermes and the command is gateway run. PUID and PGID match your
+      user so the mount stays writable. Ports 8642 and 9119 are not published.
+      The guide's -p 8642:8642 would listen on every interface; chat bots do
+      not need it. Re-running starts the existing container instead of creating
+      a second one. The Update button recreates it.
+    summary_th: >
+      สร้าง ~/.hermes แล้วเริ่ม nousresearch/hermes-agent โดยเมานต์โฟลเดอร์นั้นที่
+      /opt/data ตามวอลุ่มในเอกสาร ชื่อคอนเทนเนอร์คือ hermes คำสั่งคือ gateway run
+      PUID และ PGID ตรงกับผู้ใช้ของคุณเพื่อให้เขียนวอลุ่มได้ ไม่เผยแพร่พอร์ต
+      8642 และ 9119 คำสั่ง -p 8642:8642 ในคู่มือจะฟังทุกอินเทอร์เฟซ แชทบอทไม่ต้องใช้
+      การรันซ้ำจะสตาร์ตคอนเทนเนอร์เดิม ไม่สร้างตัวที่สอง ปุ่มอัปเดตจะสร้างใหม่
+    shell: |
+      set -euo pipefail
+      home="${HOME}/.hermes"
+      mkdir -p "$home"
+      chmod 700 "$home"
+      uid="$(id -u)"
+      gid="$(id -g)"
+      if sudo -n docker ps -a --format '{{.Names}}' | grep -qx hermes; then
+        echo "Container hermes already exists. Starting it."
+        sudo -n docker start hermes
+      else
+        sudo -n docker run -d \
+          --name hermes \
+          --restart unless-stopped \
+          -e "PUID=${uid}" \
+          -e "PGID=${gid}" \
+          -v "${home}:/opt/data" \
+          nousresearch/hermes-agent gateway run
+      fi
+      sudo -n docker ps --filter name=^hermes$

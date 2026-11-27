@@ -7,16 +7,11 @@ checks:
   - id: hermes-cli
     title_en: Hermes command
     title_th: คำสั่ง hermes
-    kind: command
+    kind: hermes
+    args: ["--version"]
     fix_page: install:install-hermes
-    shell: |
-      set -euo pipefail
-      export PATH="$HOME/.local/bin:$PATH"
-      if [ ! -x "$HOME/.local/bin/hermes" ]; then
-        echo "missing $HOME/.local/bin/hermes"
-        exit 1
-      fi
-      hermes --version || hermes version
+    detail_en: Runs hermes --version, or docker exec hermes hermes --version when Docker mode is selected.
+    detail_th: รัน hermes --version หรือ docker exec hermes hermes --version เมื่อเลือกโหมด Docker
 
   - id: config-yaml
     title_en: config.yaml has a provider and model
@@ -47,13 +42,51 @@ checks:
   - id: gateway
     title_en: Messaging gateway status
     title_th: สถานะเกตเวย์ข้อความ
-    kind: command
+    kind: hermes
+    args: ["gateway", "status"]
     optional: true
     fix_page: install:gateway-start
-    shell: |
-      set -euo pipefail
-      export PATH="$HOME/.local/bin:$PATH"
-      hermes gateway status
+    detail_en: hermes gateway status. In Docker mode this is docker exec hermes hermes gateway status.
+    detail_th: hermes gateway status ในโหมด Docker คือ docker exec hermes hermes gateway status
+
+  - id: doctor
+    title_en: hermes doctor
+    title_th: hermes doctor
+    kind: hermes
+    args: ["doctor"]
+    optional: true
+    fix_page: install
+    detail_en: The installation guide says hermes doctor reports what is missing. In Docker mode it runs inside the container.
+    detail_th: คู่มือติดตั้งบอกว่า hermes doctor รายงานสิ่งที่ขาด ในโหมด Docker มันรันในคอนเทนเนอร์
+
+  - id: allowlists
+    title_en: Allowlists for enabled chat bots
+    title_th: รายการอนุญาตของบอทที่เปิดใช้
+    kind: allowlists
+    fix_page: telegram
+    detail_en: >
+      Every platform with platforms.<name>.enabled true needs a non-empty
+      allowlist (for example TELEGRAM_ALLOWED_USERS). An empty list fails.
+      GATEWAY_ALLOW_ALL_USERS does not count.
+    detail_th: >
+      ทุกแพลตฟอร์มที่ platforms.<name>.enabled เป็น true ต้องมีรายการอนุญาตที่ไม่ว่าง
+      เช่น TELEGRAM_ALLOWED_USERS ถ้าว่างจะไม่ผ่าน GATEWAY_ALLOW_ALL_USERS ไม่นับ
+
+  - id: loopback-ports
+    title_en: API and dashboard ports stay on this PC
+    title_th: พอร์ต API และแดชบอร์ดอยู่แค่ในเครื่อง
+    kind: loopback_ports
+    ports: [8642, 9119]
+    fix_page: install
+    detail_en: >
+      Port 8642 is the gateway API and 9119 is the dashboard. Not listening is
+      fine. Listening on 127.0.0.1 or ::1 is fine. Listening on 0.0.0.0 or
+      another address fails. The Docker guide's -p 8642:8642 publishes every
+      interface; this wizard does not publish those ports.
+    detail_th: >
+      พอร์ต 8642 คือ API ของเกตเวย์ และ 9119 คือแดชบอร์ด ไม่ได้เปิดฟังก็ผ่าน
+      เปิดฟังที่ 127.0.0.1 หรือ ::1 ผ่าน เปิดฟังที่ 0.0.0.0 หรือที่อยู่อื่นไม่ผ่าน
+      คำสั่ง -p 8642:8642 ในคู่มือ Docker เปิดทุกอินเทอร์เฟซ ตัวช่วยนี้ไม่เผยแพร่พอร์ตนั้น
 
   - id: telegram
     title_en: Telegram bot token

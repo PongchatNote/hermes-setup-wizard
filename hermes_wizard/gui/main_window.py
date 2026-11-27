@@ -21,9 +21,11 @@ from PySide6.QtWidgets import (
 )
 
 from hermes_wizard import progress, secrets
-from hermes_wizard.catalog import MAIN_FLOW, load_gateways, load_groups, load_secrets, load_settings
+from hermes_wizard.catalog import load_gateways, load_groups, load_secrets, load_settings
+from hermes_wizard.runtime import flow_pages, required_step_ids
 from hermes_wizard.configio import get_dotted, load_yaml
 from hermes_wizard.gui.pages import (
+    CliChatPage,
     ExtraKeyPage,
     FaqPage,
     GatewayPage,
@@ -42,6 +44,7 @@ from hermes_wizard.redact import redact
 
 class Session(QObject):
     milestones_changed = Signal()
+    profile_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -63,7 +66,8 @@ class MainWindow(QMainWindow):
         self.nav_ids: list[str] = []
         self._build()
         self.session.milestones_changed.connect(self._paint_progress)
-        self._paint_progress()
+        self.session.profile_changed.connect(self._rebuild_progress)
+        self._rebuild_progress()
         last = self.session.progress.get("last_page") or "welcome"
         self.open_page(last if last in self.pages else "welcome")
         self.apply_language(self.session.mode)
@@ -73,20 +77,6 @@ class MainWindow(QMainWindow):
         outer = QVBoxLayout(shell)
         self.progress_row = QHBoxLayout()
         self.progress_buttons: dict[str, QPushButton] = {}
-        labels = {
-            "install": ("1 Install", "1 ติดตั้ง"),
-            "provider": ("2 Provider", "2 ผู้ให้บริการ"),
-            "telegram": ("3 Telegram", "3 Telegram"),
-            "discord": ("4 Discord", "4 Discord"),
-            "line": ("5 LINE", "5 LINE"),
-            "health": ("6 Check", "6 ตรวจ"),
-        }
-        for page_id in MAIN_FLOW:
-            button = QPushButton(labels[page_id][0])
-            button.setProperty("secondary", True)
-            button.clicked.connect(lambda _checked=False, target=page_id: self.open_page(target))
-            self.progress_buttons[page_id] = button
-            self.progress_row.addWidget(button)
         outer.addLayout(self.progress_row)
 
         body = QSplitter()
@@ -131,11 +121,13 @@ class MainWindow(QMainWindow):
         outer.addLayout(lang)
         self.setCentralWidget(shell)
 
-        self._add("welcome", WelcomePage(), "Welcome", "เริ่มต้น")
+        welcome = WelcomePage(self.session)
+        self._add("welcome", welcome, "Welcome", "เริ่มต้น")
         self.pages["welcome"].open_page.connect(self.open_page)
         install = InstallPage(self.session)
         self._add("install", install, "Install", "ติดตั้ง")
         self._add("provider", ProviderPage(self.session), "Provider & model", "ผู้ให้บริการและโมเดล")
+        self._add("cli-chat", CliChatPage(self.session), "Test CLI chat", "ทดลองแชท")
         gateways = {item.id: item for item in load_gateways()}
         for gate_id, en, th in (
             ("telegram", "Telegram", "Telegram"),
@@ -222,6 +214,33 @@ class MainWindow(QMainWindow):
         if page_id in self.pages:
             self.open_page(page_id)
 
+    def _rebuild_progress(self) -> None:
+        while self.progress_row.count():
+            item = self.progress_row.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self.progress_buttons.clear()
+        pages = flow_pages(
+            self.session.progress.get("setup_profile") or "full",
+            self.session.progress.get("quick_bot") or "telegram",
+        )
+        for page_id in pages:
+            button = QPushButton(page_id)
+            button.setProperty("secondary", True)
+            button.clicked.connect(lambda _checked=False, target=page_id: self.open_page(target))
+            self.progress_buttons[page_id] = button
+            self.progress_row.addWidget(button)
+        self._label_progress(self.session.mode)
+        self._paint_progress()
+
+    def _label_progress(self, mode: str) -> None:
+        for index, page_id in enumerate(self.progress_buttons, start=1):
+            en, th = FLOW_LABELS.get(page_id, (page_id, page_id))
+            self.progress_buttons[page_id].setText(
+                join(f"{index} {en}", f"{index} {th}", mode).replace("\n", " ")
+            )
+
     def apply_language(self, mode: str) -> None:
         self.session.mode = mode
         self.session.progress["language"] = mode
@@ -229,16 +248,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(join("Hermes Setup Wizard", "ตัวช่วยติดตั้ง Hermes", mode).replace("\n", " · "))
         self.log_title.setText(join("Command output — secrets are removed", "ผลคำสั่ง — ความลับถูกตัดออก", mode))
         self.clear_button.setText(join("Clear panel", "ล้างแผง", mode))
-        labels = {
-            "install": ("1 Install", "1 ติดตั้ง"),
-            "provider": ("2 Provider", "2 ผู้ให้บริการ"),
-            "telegram": ("3 Telegram", "3 Telegram"),
-            "discord": ("4 Discord", "4 Discord"),
-            "line": ("5 LINE", "5 LINE"),
-            "health": ("6 Check", "6 ตรวจ"),
-        }
-        for page_id, button in self.progress_buttons.items():
-            button.setText(join(*labels[page_id], mode).replace("\n", " "))
+        self._label_progress(mode)
         for row in range(self.nav.count()):
             item = self.nav.item(row)
             page_id = item.data(Qt.ItemDataRole.UserRole)
@@ -264,12 +274,25 @@ class MainWindow(QMainWindow):
                 button.setStyleSheet("background:#fef3c7;color:#1c1917;")
 
 
+FLOW_LABELS = {
+    "install": ("Install", "ติดตั้ง"),
+    "provider": ("Provider", "ผู้ให้บริการ"),
+    "cli-chat": ("Test chat", "ทดแชท"),
+    "telegram": ("Telegram", "Telegram"),
+    "discord": ("Discord", "Discord"),
+    "line": ("LINE", "LINE"),
+    "health": ("Check", "ตรวจ"),
+}
+
+
 def milestone_flags(data: dict) -> dict[str, str]:
     """ok = done, optional = saved but not required, pending = not done."""
     flags = {}
-    required = [step_id for step_id in ("check-os", "apt-prereqs", "install-hermes", "verify-cli")]
+    mode = data.get("install_mode") or "native"
+    required = required_step_ids(mode)
     steps = data.get("steps") or {}
     flags["install"] = "ok" if all(steps.get(step_id, {}).get("status") == "ok" for step_id in required) else "pending"
+    flags["cli-chat"] = "ok" if steps.get("cli-chat", {}).get("status") == "ok" else "pending"
     flags["provider"] = "ok" if _provider_ready() else "pending"
     for gate, key in (
         ("telegram", "TELEGRAM_BOT_TOKEN"),

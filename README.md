@@ -29,8 +29,35 @@ export PATH="$HOME/.local/bin:$PATH"
 จากนั้นกดตามแถบด้านบน: ติดตั้ง → ผู้ให้บริการและโมเดล → Telegram → Discord → LINE → ตรวจครั้งสุดท้าย
 แชทบอทไม่บังคับ ทุกหน้าเปิดซ้ำได้จากแถบซ้าย
 
-The top bar follows Install, Provider, Telegram, Discord, LINE, then the final check.
-Chat bots are optional. Any page can be opened again from the sidebar.
+หน้าแรกเลือกได้สองอย่าง และค่าเริ่มต้นคือพฤติกรรมเดิม
+
+- **ตั้งค่าทั้งหมด / Full setup** (ค่าเริ่มต้น): ติดตั้ง, ผู้ให้บริการ, ทดแชท, Telegram, Discord, LINE, ตรวจครั้งสุดท้าย แล้วตามด้วยหน้าตั้งค่าอื่น
+- **ตั้งค่าแบบย่อ / Quick setup**: ติดตั้ง, ผู้ให้บริการ, ทดแชท, บอทที่เลือกหนึ่งตัว, ตรวจครั้งสุดท้าย
+- **ติดตั้งในเครื่อง / Native** (ค่าเริ่มต้น): `install.sh` ของ Hermes ตามเดิม
+- **Docker**: อิมเมจ `nousresearch/hermes-agent` เมานต์ `~/.hermes` ที่ `/opt/data` ตามคู่มือ Docker ถ้ายังไม่มี Docker จะติดตั้งจากที่เก็บ apt ทางการของ Docker แล้วเพิ่มผู้ใช้เข้ากลุ่ม `docker`
+
+สลับโหมดได้ตลอดที่หน้าเริ่มต้นหรือหน้าติดตั้ง แถบด้านบนเปลี่ยนตามโหมด
+
+The first screen chooses the path. The defaults are the previous behavior: full setup and the native installer.
+
+- **Full setup** (default): install, provider, a CLI test chat, Telegram, Discord, LINE, then the final check, plus the other settings pages.
+- **Quick setup**: install, provider, the CLI test, one chosen bot, and the final check.
+- **Native** (default): the existing Hermes `install.sh` path.
+- **Docker**: image `nousresearch/hermes-agent`, with `~/.hermes` mounted at `/opt/data` as the Docker guide describes. If Docker is missing, the wizard installs Docker Engine from Docker's Ubuntu apt repository and adds your user to the `docker` group.
+
+Switch later from the welcome page or the install page. The top bar follows the choice.
+
+หน้าทดลองแชทส่ง `hermes chat -q` (หรือ `docker run --rm -v ~/.hermes:/opt/data nousresearch/hermes-agent chat -q` ในโหมด Docker) ก่อนหน้าบอท หน้าบอทจะเตือนถ้าขั้นนี้ยังไม่ผ่าน
+
+หน้าตรวจครั้งสุดท้ายเพิ่มสามอย่าง: บอทที่เปิดใช้ต้องมีรหัสผู้ใช้ในรายการอนุญาต, พอร์ต 8642 และ 9119 ต้องไม่ฟังบนอินเทอร์เฟซสาธารณะ (ไม่เปิด หรือเปิดแค่ 127.0.0.1 / ::1), และ `hermes doctor` กับ `hermes gateway status` ตามโหมดที่เลือก
+
+หน้าอัปเดตมีปุ่มอัปเดต Hermes (`hermes update` หรือ `docker pull` แล้วสร้างคอนเทนเนอร์ใหม่), ปุ่ม `git pull` ของตัวช่วย, ปุ่มสำรอง `~/.hermes` เป็น `~/hermes-backups/hermes-<เวลา>.tar.gz` สิทธิ์ 0600 (ไฟล์นี้มีความลับ), และปุ่มกู้คืน
+
+The CLI test page runs `hermes chat -q` (or the documented `docker run ... chat -q` form) before the bot pages. Those pages warn until the test passes.
+
+The final check also requires an allowlist on every enabled bot, checks that ports 8642 and 9119 are not listening on a public address, and runs `hermes doctor` plus `hermes gateway status` for the selected install mode.
+
+The Updates page can update Hermes, update this wizard with git pull, back up `~/.hermes` to a mode-0600 tar.gz (it contains secrets), and restore that archive.
 
 ## สิ่งที่ตัวช่วยทำ / What it writes
 
@@ -94,6 +121,8 @@ PYTHONPATH=. python3 -m pytest
 - คอนฟิก: <https://hermes-agent.nousresearch.com/docs/user-guide/configuration>
   ความลับอยู่ที่ `~/.hermes/.env` ค่าอื่นอยู่ที่ `config.yaml`
 - ตัวแปรสภาพแวดล้อม: <https://hermes-agent.nousresearch.com/docs/reference/environment-variables>
+- Docker: <https://hermes-agent.nousresearch.com/docs/user-guide/docker> อิมเมจ `nousresearch/hermes-agent`, วอลุ่ม `~/.hermes:/opt/data`, อัปเกรดด้วย `docker pull` แล้วสร้างคอนเทนเนอร์ใหม่ ตัวช่วยไม่ใส่ `-p 8642:8642` เพราะรูปแบบนั้นฟังทุกอินเทอร์เฟซ
+- ติดตั้ง Docker Engine: <https://docs.docker.com/engine/install/ubuntu/> และกลุ่ม docker จาก <https://docs.docker.com/engine/install/linux-postinstall/>
 - เกตเวย์: <https://hermes-agent.nousresearch.com/docs/user-guide/messaging>
   Telegram, Discord, LINE (`plugins/platforms/line/`), Slack, Signal, Matrix, Email, WhatsApp Cloud API, Teams, ntfy
 - LINE: <https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line>
