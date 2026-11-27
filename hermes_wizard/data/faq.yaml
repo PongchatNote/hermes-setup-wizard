@@ -1,0 +1,128 @@
+# Short answers grounded in the Hermes docs. Commands are safe to copy.
+faq:
+  - id: no-gpu
+    q_en: This PC has no GPU. Can Hermes still run?
+    q_th: เครื่องนี้ไม่มี GPU Hermes รันได้ไหม
+    a_en: >
+      Yes. With OpenRouter, DeepSeek (direct), OpenAI, Anthropic, Nous Portal,
+      or Ollama Cloud, the model runs on their servers. This wizard's
+      recommended preset is OpenRouter plus a DeepSeek model id. Local Ollama
+      and LM Studio are supported, and Hermes still requires a local server to
+      offer at least 64,000 tokens of context. That is a poor fit for a 16 GB
+      machine with no GPU.
+    a_th: >
+      ได้ ถ้าใช้ OpenRouter, DeepSeek ตรง, OpenAI, Anthropic, Nous Portal
+      หรือ Ollama Cloud โมเดลรันบนเซิร์ฟเวอร์ของเขา ค่าที่ตัวช่วยแนะนำคือ
+      OpenRouter กับชื่อโมเดล DeepSeek Ollama ในเครื่องและ LM Studio ใช้ได้
+      แต่ Hermes ยังต้องการให้เซิร์ฟเวอร์ในเครื่องให้บริบทอย่างน้อย 64,000 โทเคน
+      ซึ่งไม่เหมาะกับเครื่องแรม 16 GB ที่ไม่มี GPU
+
+  - id: command-not-found
+    q_en: The terminal says hermes is not found.
+    q_th: เทอร์มินัลบอกว่าไม่พบคำสั่ง hermes
+    a_en: >
+      The installer puts the launcher at ~/.local/bin/hermes. Open a new
+      terminal, or run the export command below. The install page calls that
+      file by its path, so the wizard can succeed before a new terminal sees it.
+    a_th: >
+      ตัวติดตั้งวางคำสั่งที่ ~/.local/bin/hermes เปิดเทอร์มินัลใหม่ หรือรันคำสั่ง
+      export ด้านล่าง หน้าติดตั้งเรียกไฟล์นั้นตามพาธ ดังนั้นตัวช่วยสำเร็จได้ก่อนที่
+      เทอร์มินัลใหม่จะเห็นคำสั่ง
+    command: export PATH="$HOME/.local/bin:$PATH"
+
+  - id: api-key
+    q_en: Hermes says the API key is not set.
+    q_th: Hermes บอกว่ายังไม่ได้ตั้งคีย์ API
+    a_en: >
+      Open Provider & AI model, choose the provider that matches the key, paste
+      the key, and press Save. Hermes reads secrets from ~/.hermes/.env. The
+      file must be mode 0600. The wizard sets that mode. The log panel never
+      shows the key. The official repair command is hermes model.
+    a_th: >
+      เปิดหน้าผู้ให้บริการและโมเดล เลือกผู้ให้บริการให้ตรงกับคีย์ วางคีย์ แล้วกด
+      บันทึก Hermes อ่านความลับจาก ~/.hermes/.env ไฟล์ต้องเป็นสิทธิ์ 0600
+      ตัวช่วยตั้งสิทธิ์นี้ให้ แผงบันทึกไม่แสดงคีย์ คำสั่งซ่อมในเอกสารคือ hermes model
+    command: hermes model
+
+  - id: telegram-id
+    q_en: Telegram does not answer, or I used my @username.
+    q_th: Telegram ไม่ตอบ หรือฉันใส่ชื่อ @
+    a_en: >
+      TELEGRAM_ALLOWED_USERS is a numeric id, not a @username. Message
+      @userinfobot and paste the number. The token comes from @BotFather after
+      /newbot. Then start the gateway from the Install page.
+    a_th: >
+      TELEGRAM_ALLOWED_USERS เป็นรหัสตัวเลข ไม่ใช่ชื่อ @ ส่งข้อความหา
+      @userinfobot แล้ววางตัวเลข โทเคนมาจาก @BotFather หลังคำสั่ง /newbot
+      จากนั้นเริ่มเกตเวย์ที่หน้าติดตั้ง
+    command: hermes gateway start
+
+  - id: discord-intent
+    q_en: The Discord bot stays offline.
+    q_th: บอท Discord ไม่ออนไลน์
+    a_en: >
+      On the Bot page of the Discord Developer Portal, turn on Message Content
+      Intent and Server Members Intent, then save. A successful token test in
+      this wizard only proves the REST token. It does not prove those intents
+      are on. The gateway log says when Discord rejected the connection for
+      missing privileged intents.
+    a_th: >
+      ที่หน้า Bot ใน Discord Developer Portal เปิด Message Content Intent และ
+      Server Members Intent แล้วบันทึก การทดสอบโทเคนในตัวช่วยพิสูจน์แค่โทเคน REST
+      ไม่ได้พิสูจน์ว่าเปิด intent แล้ว บันทึกของเกตเวย์จะบอกเมื่อ Discord
+      ปฏิเสธการเชื่อมต่อเพราะไม่มี privileged intent
+
+  - id: line-native
+    q_en: Does Hermes support LINE?
+    q_th: Hermes รองรับ LINE ไหม
+    a_en: >
+      Yes. LINE is a bundled platform plugin at plugins/platforms/line/. It uses
+      the LINE Messaging API: a channel access token, a channel secret, and an
+      allowlist. It is not a QR login of your personal LINE account, and it is
+      not an unofficial bridge. Image and voice sends also need a public HTTPS
+      URL in LINE_PUBLIC_URL. Enable platforms.line.enabled, then start the gateway.
+    a_th: >
+      รองรับ LINE เป็นปลั๊กอินที่มากับโปรแกรมที่ plugins/platforms/line/
+      ใช้ LINE Messaging API คือโทเคนช่อง ความลับช่อง และรายการอนุญาต
+      ไม่ใช่การล็อกอิน QR ของบัญชี LINE ส่วนตัว และไม่ใช่สะพานนอกเอกสาร
+      การส่งรูปและเสียงต้องมี URL แบบ HTTPS ใน LINE_PUBLIC_URL
+      เปิด platforms.line.enabled แล้วเริ่มเกตเวย์
+
+  - id: desktop-ram
+    q_en: The desktop build is using all the memory.
+    q_th: การสร้างแอปเดสก์ท็อปกินแรมจนหมด
+    a_en: >
+      On Linux, hermes desktop builds Electron from the source checkout. That
+      step is optional. The terminal and the chat gateway work without it.
+      Stop the step if the machine becomes unusable, then use the CLI.
+    a_th: >
+      บนลินุกซ์ hermes desktop บิลด์ Electron จากซอร์ส ขั้นตอนนี้ไม่บังคับ
+      เทอร์มินัลและเกตเวย์แชททำงานได้โดยไม่มีแอป หยุดขั้นตอนนั้นถ้าเครื่องใช้ต่อไม่ได้
+      แล้วใช้บรรทัดคำสั่ง
+
+  - id: sudo
+    q_en: Where does the sudo password go?
+    q_th: รหัสผ่าน sudo ไปอยู่ที่ไหน
+    a_en: >
+      Steps that install apt packages use pkexec (the system password dialog)
+      or sudo -S. The password is written to that process only. It is not
+      saved in the progress file, the keyring, config.yaml, or the log.
+    a_th: >
+      ขั้นตอนที่ติดตั้งแพ็กเกจ apt ใช้ pkexec (หน้าต่างรหัสผ่านของระบบ) หรือ
+      sudo -S รหัสผ่านถูกส่งให้กระบวนการนั้นเท่านั้น ไม่ถูกเก็บในไฟล์ความคืบหน้า
+      พวงกุญแจ config.yaml หรือบันทึก
+
+  - id: update-wizard
+    q_en: How do I update this wizard?
+    q_th: อัปเดตตัวช่วยนี้ได้อย่างไร
+    a_en: >
+      Open the Updates page and press the git pull button. It runs
+      git pull --ff-only in this private checkout and does not push. If you
+      edited files here, it stops and asks you to commit or stash first.
+      Restart the wizard after a pull. Updating Hermes itself is a different
+      command: hermes update.
+    a_th: >
+      เปิดหน้าอัปเดตแล้วกดปุ่ม git pull มันรัน git pull --ff-only ในโฟลเดอร์ส่วนตัวนี้
+      และไม่ push ถ้าคุณแก้ไฟล์ไว้ มันจะหยุดและให้ commit หรือ stash ก่อน
+      เปิดตัวช่วยใหม่หลังดึงโค้ด การอัปเดตตัว Hermes เป็นคนละคำสั่ง คือ hermes update
+    command: hermes update

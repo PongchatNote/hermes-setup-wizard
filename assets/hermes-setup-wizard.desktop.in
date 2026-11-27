@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hermes Setup Wizard
+Name[th]=ตัวช่วยติดตั้ง Hermes
+GenericName=Hermes setup
+GenericName[th]=ตั้งค่า Hermes
+Comment=Install and configure Hermes Agent on Ubuntu
+Comment[th]=ติดตั้งและตั้งค่า Hermes Agent บน Ubuntu
+Exec=@EXEC@
+Icon=utilities-terminal
+Terminal=false
+Categories=Utility;Settings;
+StartupNotify=true
+Keywords=hermes;agent;setup;

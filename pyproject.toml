@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-setup-wizard"
+version = "0.1.0"
+description = "Ubuntu desktop setup wizard for Nous Research Hermes Agent"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PySide6>=6.6",
+  "PyYAML>=6",
+  "keyring>=25",
+  "secretstorage>=3.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+hermes-setup-wizard = "hermes_wizard.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["hermes_wizard*"]
+
+[tool.setuptools.package-data]
+hermes_wizard = ["data/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

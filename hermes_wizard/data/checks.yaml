@@ -1,0 +1,117 @@
+# Final-page checks. fix_page is a sidebar id, optionally install:<step-id>.
+# https://hermes-agent.nousresearch.com/docs/getting-started/installation
+# https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+# https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+
+checks:
+  - id: hermes-cli
+    title_en: Hermes command
+    title_th: คำสั่ง hermes
+    kind: hermes
+    args: ["--version"]
+    fix_page: install:install-hermes
+    detail_en: Runs hermes --version, or docker exec hermes hermes --version when Docker mode is selected.
+    detail_th: รัน hermes --version หรือ docker exec hermes hermes --version เมื่อเลือกโหมด Docker
+
+  - id: config-yaml
+    title_en: config.yaml has a provider and model
+    title_th: config.yaml มีผู้ให้บริการและโมเดล
+    kind: config
+    fix_page: settings:model
+    detail_en: Reads ~/.hermes/config.yaml. Secrets in that file are not printed.
+    detail_th: อ่าน ~/.hermes/config.yaml ไม่พิมพ์ความลับในไฟล์นั้น
+
+  - id: env-mode
+    title_en: ~/.hermes/.env is mode 0600
+    title_th: ไฟล์ ~/.hermes/.env มีสิทธิ์ 0600
+    kind: env_mode
+    fix_page: secrets
+
+  - id: openrouter
+    title_en: OpenRouter accepts the API key
+    title_th: OpenRouter รับคีย์ API
+    kind: openrouter
+    fix_page: secrets
+    detail_en: >
+      GET https://openrouter.ai/api/v1/key with the stored OPENROUTER_API_KEY.
+      The key is not printed.
+    detail_th: >
+      เรียก GET https://openrouter.ai/api/v1/key ด้วย OPENROUTER_API_KEY ที่เก็บไว้
+      ไม่พิมพ์คีย์
+
+  - id: gateway
+    title_en: Messaging gateway status
+    title_th: สถานะเกตเวย์ข้อความ
+    kind: hermes
+    args: ["gateway", "status"]
+    optional: true
+    fix_page: install:gateway-start
+    detail_en: hermes gateway status. In Docker mode this is docker exec hermes hermes gateway status.
+    detail_th: hermes gateway status ในโหมด Docker คือ docker exec hermes hermes gateway status
+
+  - id: doctor
+    title_en: hermes doctor
+    title_th: hermes doctor
+    kind: hermes
+    args: ["doctor"]
+    optional: true
+    fix_page: install
+    detail_en: The installation guide says hermes doctor reports what is missing. In Docker mode it runs inside the container.
+    detail_th: คู่มือติดตั้งบอกว่า hermes doctor รายงานสิ่งที่ขาด ในโหมด Docker มันรันในคอนเทนเนอร์
+
+  - id: allowlists
+    title_en: Allowlists for enabled chat bots
+    title_th: รายการอนุญาตของบอทที่เปิดใช้
+    kind: allowlists
+    fix_page: telegram
+    detail_en: >
+      Every platform with platforms.<name>.enabled true needs a non-empty
+      allowlist (for example TELEGRAM_ALLOWED_USERS). An empty list fails.
+      GATEWAY_ALLOW_ALL_USERS does not count.
+    detail_th: >
+      ทุกแพลตฟอร์มที่ platforms.<name>.enabled เป็น true ต้องมีรายการอนุญาตที่ไม่ว่าง
+      เช่น TELEGRAM_ALLOWED_USERS ถ้าว่างจะไม่ผ่าน GATEWAY_ALLOW_ALL_USERS ไม่นับ
+
+  - id: loopback-ports
+    title_en: API and dashboard ports stay on this PC
+    title_th: พอร์ต API และแดชบอร์ดอยู่แค่ในเครื่อง
+    kind: loopback_ports
+    ports: [8642, 9119]
+    fix_page: install
+    detail_en: >
+      Port 8642 is the gateway API and 9119 is the dashboard. Not listening is
+      fine. Listening on 127.0.0.1 or ::1 is fine. Listening on 0.0.0.0 or
+      another address fails. The Docker guide's -p 8642:8642 publishes every
+      interface; this wizard does not publish those ports.
+    detail_th: >
+      พอร์ต 8642 คือ API ของเกตเวย์ และ 9119 คือแดชบอร์ด ไม่ได้เปิดฟังก็ผ่าน
+      เปิดฟังที่ 127.0.0.1 หรือ ::1 ผ่าน เปิดฟังที่ 0.0.0.0 หรือที่อยู่อื่นไม่ผ่าน
+      คำสั่ง -p 8642:8642 ในคู่มือ Docker เปิดทุกอินเทอร์เฟซ ตัวช่วยนี้ไม่เผยแพร่พอร์ตนั้น
+
+  - id: telegram
+    title_en: Telegram bot token
+    title_th: โทเคนบอท Telegram
+    kind: telegram
+    optional: true
+    fix_page: gateway:telegram
+
+  - id: discord
+    title_en: Discord bot token
+    title_th: โทเคนบอท Discord
+    kind: discord
+    optional: true
+    fix_page: gateway:discord
+
+  - id: line
+    title_en: LINE channel access token
+    title_th: โทเคนช่อง LINE
+    kind: line
+    optional: true
+    fix_page: gateway:line
+
+  - id: slack
+    title_en: Slack bot token
+    title_th: โทเคนบอท Slack
+    kind: slack
+    optional: true
+    fix_page: gateway:slack

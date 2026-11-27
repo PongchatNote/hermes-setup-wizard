@@ -1,0 +1,410 @@
+# Install steps for Ubuntu, in the order the Hermes docs describe.
+# Sources are the official installation and desktop pages. Do not put secrets here.
+# https://hermes-agent.nousresearch.com/docs/getting-started/installation
+# https://hermes-agent.nousresearch.com/docs/user-guide/desktop
+
+steps:
+  - id: check-os
+    title_en: Check Ubuntu
+    title_th: ตรวจ Ubuntu
+    privilege: none
+    optional: false
+    modes: [native, docker]
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    summary_en: >
+      Confirm this is Linux and read /etc/os-release. The wizard targets Ubuntu
+      22.04 and 24.04 desktop. Other Ubuntu releases can continue; the step
+      prints the version it found.
+    summary_th: >
+      ตรวจว่าเป็นลินุกซ์และอ่าน /etc/os-release ตัวช่วยนี้ทำมาสำหรับ Ubuntu
+      22.04 และ 24.04 รุ่นอื่นของ Ubuntu ยังไปต่อได้ ขั้นตอนนี้จะพิมพ์รุ่นที่พบ
+    shell: |
+      set -euo pipefail
+      if [ "$(uname -s)" != "Linux" ]; then
+        echo "Hermes on this wizard path expects Linux." >&2
+        exit 1
+      fi
+      if [ ! -r /etc/os-release ]; then
+        echo "Missing /etc/os-release" >&2
+        exit 1
+      fi
+      . /etc/os-release
+      echo "ID=${ID:-unknown} VERSION_ID=${VERSION_ID:-unknown} PRETTY=${PRETTY_NAME:-unknown}"
+      case "${ID:-}" in
+        ubuntu)
+          case "${VERSION_ID:-}" in
+            22.04|24.04) echo "Ubuntu release is one of the targeted desktops." ;;
+            *) echo "Ubuntu ${VERSION_ID:-unknown} is outside 22.04/24.04. You can continue; packages may differ." ;;
+          esac
+          ;;
+        *)
+          echo "This is ${ID:-unknown}, not Ubuntu. Apt package names in the next step are for Ubuntu/Debian." >&2
+          exit 1
+          ;;
+      esac
+      for tool in git curl tar sha256sum; do
+        if command -v "$tool" >/dev/null 2>&1; then
+          echo "found $tool: $(command -v "$tool")"
+        else
+          echo "missing $tool (the next step installs it)"
+        fi
+      done
+
+  - id: apt-prereqs
+    title_en: Install documented prerequisites
+    title_th: ติดตั้งโปรแกรมที่เอกสารระบุ
+    privilege: root
+    optional: false
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    summary_en: >
+      The POSIX installer asks for git, curl, tar, and a SHA-256 tool
+      (sha256sum from coreutils). On Ubuntu it also needs libatomic1 for the
+      managed Node.js. ca-certificates lets curl verify the official
+      install.sh. build-essential and python3 supply the native compiler the
+      docs say a source build, including the Linux desktop build, can require.
+      The installer itself still downloads its own uv and lets PM install
+      pinned Python, Node.js, npm, pnpm, ripgrep, and FFmpeg.
+    summary_th: >
+      ตัวติดตั้ง POSIX ต้องมี git, curl, tar และเครื่องมือ SHA-256
+      (sha256sum จากแพ็กเกจ coreutils) บน Ubuntu ต้องมี libatomic1
+      สำหรับ Node.js ที่ Hermes จัดการ ca-certificates ให้ curl
+      ตรวจใบรับรองของ install.sh อย่างเป็นทางการ build-essential และ python3
+      คือคอมไพเลอร์ที่เอกสารบอกว่าการ빌ดจากซอร์ส รวมถึงแอปเดสก์ท็อปบนลินุกซ์
+      อาจต้องใช้ ตัวติดตั้งยังดาวน์โหลด uv เอง และให้ PM ติดตั้ง Python,
+      Node.js, npm, pnpm, ripgrep และ FFmpeg ตามเวอร์ชันที่ปักไว้
+    shell: |
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y git curl tar coreutils ca-certificates libatomic1 build-essential python3
+      echo "prerequisites installed"
+      git --version
+      curl --version | head -n 1
+      sha256sum --version | head -n 1
+      dpkg -s libatomic1 | awk '/^Package:|^Status:|^Version:/{print}'
+
+  - id: install-hermes
+    title_en: Install Hermes Agent
+    title_th: ติดตั้ง Hermes Agent
+    privilege: none
+    optional: false
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    command_hint: "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --non-interactive"
+    summary_en: >
+      Download https://hermes-agent.nousresearch.com/install.sh and run it with
+      --non-interactive. That flag skips the interactive setup and gateway
+      questions so this wizard can fill config afterwards. The script clones
+      Hermes into ~/.hermes/hermes-agent, writes the launcher to
+      ~/.local/bin/hermes, and prepares ~/.hermes. A new install follows the
+      latest stable release. Browser tools and the computer-use driver stay at
+      the installer defaults. Re-running this step is safe.
+    summary_th: >
+      ดาวน์โหลด https://hermes-agent.nousresearch.com/install.sh แล้วรันด้วย
+      --non-interactive แฟล็กนี้ข้ามคำถามตั้งค่าและเกตเวย์แบบโต้ตอบ
+      เพื่อให้ตัวช่วยนี้กรอกคอนฟิกทีหลัง สคริปต์โคลน Hermes ไปที่
+      ~/.hermes/hermes-agent สร้างคำสั่งที่ ~/.local/bin/hermes และเตรียม
+      ~/.hermes การติดตั้งใหม่ใช้รุ่น stable ล่าสุด เครื่องมือเบราว์เซอร์และ
+      computer-use ใช้ค่าเริ่มต้นของตัวติดตั้ง รันซ้ำได้
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      tmp="$(mktemp)"
+      trap 'rm -f "$tmp"' EXIT
+      curl -fsSL "https://hermes-agent.nousresearch.com/install.sh" -o "$tmp"
+      bash "$tmp" --non-interactive
+      if [ ! -x "$HOME/.local/bin/hermes" ]; then
+        echo "installer finished but ~/.local/bin/hermes is missing" >&2
+        exit 1
+      fi
+      echo "launcher: $HOME/.local/bin/hermes"
+      "$HOME/.local/bin/hermes" --version || "$HOME/.local/bin/hermes" version || true
+
+  - id: verify-cli
+    title_en: Verify the hermes command
+    title_th: ตรวจคำสั่ง hermes
+    privilege: none
+    optional: false
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    summary_en: >
+      Confirm ~/.local/bin/hermes runs. The docs say to reload the shell if the
+      command is not found. This step does not need a new terminal because it
+      calls the launcher by path and also prints whether PATH already contains
+      ~/.local/bin.
+    summary_th: >
+      ยืนยันว่า ~/.local/bin/hermes รันได้ เอกสารบอกให้โหลดเชลล์ใหม่ถ้าหาคำสั่ง
+      ไม่เจอ ขั้นตอนนี้ไม่ต้องเปิดเทอร์มินัลใหม่ เพราะเรียกไฟล์โดยตรง
+      และบอกว่า PATH มี ~/.local/bin หรือยัง
+    shell: |
+      set -euo pipefail
+      launcher="$HOME/.local/bin/hermes"
+      if [ ! -x "$launcher" ]; then
+        echo "missing $launcher — run Install Hermes Agent first" >&2
+        exit 1
+      fi
+      case ":$PATH:" in
+        *":$HOME/.local/bin:"*) echo "PATH already contains ~/.local/bin" ;;
+        *) echo "PATH does not yet contain ~/.local/bin. New terminals pick it up after the installer edits the shell rc, or add: export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
+      esac
+      "$launcher" --version || "$launcher" version
+
+  - id: desktop-build
+    title_en: Build Hermes Desktop
+    title_th: สร้างแอป Hermes Desktop
+    privilege: none
+    optional: true
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/desktop
+    command_hint: "hermes desktop --build-only"
+    summary_en: >
+      Linux has no packaged desktop download. After the source install, the
+      docs say to run hermes desktop. This step runs hermes desktop --build-only
+      so it installs workspace Node dependencies and builds the unpacked
+      Electron app without launching a window. The build is heavy on a machine
+      with 16 GB of RAM and no GPU. Skip it if you only want the terminal and
+      the chat gateway. Re-run with the same button; add --force-build yourself
+      only if a rebuild is stuck (see the desktop page).
+    summary_th: >
+      ลินุกซ์ไม่มีไฟล์เดสก์ท็อปสำเร็จรูป หลังติดตั้งจากซอร์ส เอกสารบอกให้รัน
+      hermes desktop ขั้นตอนนี้รัน hermes desktop --build-only
+      เพื่อติดตั้ง Node ของเวิร์กสเปซและビルดแอป Electron โดยยังไม่เปิดหน้าต่าง
+      การบิลด์ใช้หน่วยความจำมากบนเครื่อง 16 GB ที่ไม่มี GPU
+      ข้ามได้ถ้าใช้แค่เทอร์มินัลและเกตเวย์แชท กดรันซ้ำได้
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      if ! command -v hermes >/dev/null 2>&1; then
+        echo "hermes is not on PATH" >&2
+        exit 1
+      fi
+      hermes desktop --build-only
+      echo "desktop build finished"
+
+  - id: gateway-install
+    title_en: Install the gateway user service
+    title_th: ติดตั้งเซอร์วิสเกตเวย์ของผู้ใช้
+    privilege: none
+    optional: true
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    summary_en: >
+      Run hermes gateway install. On Linux this installs a user service (systemd
+      --user). It does not need sudo. The system-wide unit is a different
+      command, sudo hermes gateway install --system, and is not run here.
+      Come back to this step after you save a chat-bot token.
+    summary_th: >
+      รัน hermes gateway install บนลินุกซ์คำสั่งนี้ติดตั้งเซอร์วิสของผู้ใช้
+      (systemd --user) ไม่ต้องใช้ sudo หน่วยระบบทั้งเครื่องเป็นอีกคำสั่ง
+      คือ sudo hermes gateway install --system และไม่ได้รันที่นี่
+      กลับมาขั้นตอนนี้ได้หลังบันทึกโทเคนแชทบอท
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      hermes gateway install
+      hermes gateway status || true
+
+  - id: gateway-start
+    title_en: Start the gateway
+    title_th: เริ่มเกตเวย์
+    privilege: none
+    optional: true
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/messaging
+    command_hint: "hermes gateway start"
+    summary_en: >
+      Run hermes gateway start, then hermes gateway status. Start this after a
+      provider key and at least one chat platform are saved. hermes gateway
+      with no subcommand stays in the foreground, so this step does not use it.
+    summary_th: >
+      รัน hermes gateway start แล้วตามด้วย hermes gateway status
+      เริ่มหลังบันทึกคีย์ผู้ให้บริการและแพลตฟอร์มแชทอย่างน้อยหนึ่งตัว
+      คำสั่ง hermes gateway เปล่าจะค้างที่หน้าเทอร์มินัล ขั้นตอนนี้จึงไม่ใช้แบบนั้น
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      hermes gateway start
+      hermes gateway status
+
+  - id: enable-linger
+    title_en: Keep the user service after logout
+    title_th: ให้เซอร์วิสผู้ใช้ทำงานต่อหลังออกจากระบบ
+    privilege: root
+    optional: true
+    source: https://hermes-agent.nousresearch.com/docs/getting-started/installation
+    summary_en: >
+      The non-sudo install notes say a Linux user service that must survive
+      logout needs loginctl enable-linger for that user. This runs
+      loginctl enable-linger for the account that invoked sudo.
+    summary_th: >
+      เอกสารการติดตั้งแบบไม่ใช้ sudo บอกว่าเซอร์วิสผู้ใช้บนลินุกซ์ที่ต้องอยู่ต่อ
+      หลังออกจากระบบ ต้องใช้ loginctl enable-linger ของผู้ใช้นั้น
+      ขั้นตอนนี้รัน loginctl enable-linger ให้บัญชีที่เรียก sudo
+    shell: |
+      set -euo pipefail
+      target="${SUDO_USER:-$USER}"
+      if [ -z "$target" ] || [ "$target" = "root" ]; then
+        echo "Could not see the desktop user (SUDO_USER). Run this step from your own account." >&2
+        exit 1
+      fi
+      loginctl enable-linger "$target"
+      loginctl show-user "$target" -p Linger
+
+  - id: apparmor-desktop
+    title_en: AppArmor profile for Hermes Desktop
+    title_th: โปรไฟล์ AppArmor สำหรับ Hermes Desktop
+    privilege: sudo-cache
+    optional: true
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/desktop
+    summary_en: >
+      On Ubuntu 23.10 and later, kernel.apparmor_restrict_unprivileged_userns=1
+      can block Chromium inside Hermes Desktop. The docs recommend the setuid
+      chrome-sandbox helper first. hermes desktop --install-apparmor-profile is
+      the optional alternative: it writes a profile under /etc/apparmor.d that
+      grants user namespaces to this app path. The desktop page warns that the
+      checkout is writable by your user, so this is a real security tradeoff.
+      Run this step only if the desktop window fails to open. It is not part of
+      Run required steps.
+    summary_th: >
+      บน Ubuntu 23.10 ขึ้นไป ค่า kernel.apparmor_restrict_unprivileged_userns=1
+      อาจบล็อก Chromium ใน Hermes Desktop เอกสารแนะนำตัวช่วย chrome-sandbox
+      แบบ setuid ก่อน คำสั่ง hermes desktop --install-apparmor-profile
+      เป็นทางเลือก มันเขียนโปรไฟล์ลง /etc/apparmor.d เพื่อให้เส้นทางแอปนี้ใช้
+      user namespace ได้ หน้าเดสก์ท็อปเตือนว่าโฟลเดอร์ซอร์สผู้ใช้เขียนได้
+      จึงเป็นการแลกเรื่องความปลอดภัย รันขั้นตอนนี้เมื่อหน้าต่างเดสก์ท็อปเปิดไม่ได้
+      มันไม่ได้อยู่ในปุ่มรันขั้นตอนที่จำเป็น
+    shell: |
+      set -euo pipefail
+      export PATH="$HOME/.local/bin:$PATH"
+      if ! command -v hermes >/dev/null 2>&1; then
+        echo "hermes is not on PATH" >&2
+        exit 1
+      fi
+      sudo -n env PATH="$PATH" HOME="$HOME" hermes desktop --install-apparmor-profile
+
+  - id: install-docker
+    title_en: Install Docker Engine
+    title_th: ติดตั้ง Docker Engine
+    privilege: root
+    optional: false
+    modes: [docker]
+    source: https://docs.docker.com/engine/install/ubuntu/
+    command_hint: "https://docs.docker.com/engine/install/ubuntu/"
+    summary_en: >
+      If docker is already on PATH, this step stops. Otherwise it follows
+      Docker's Ubuntu instructions: the key from
+      https://download.docker.com/linux/ubuntu/gpg, the stable apt repo, then
+      docker-ce, docker-ce-cli, containerd.io, and the buildx and compose
+      plugins. It does not remove a Docker you already installed.
+    summary_th: >
+      ถ้ามีคำสั่ง docker อยู่แล้ว ขั้นตอนนี้จบ ถ้ายังไม่มี มันทำตามวิธีติดตั้งบน
+      Ubuntu ของ Docker คือคีย์จาก https://download.docker.com/linux/ubuntu/gpg
+      ที่เก็บ apt สาขา stable แล้วติดตั้ง docker-ce, docker-ce-cli, containerd.io
+      และปลั๊กอิน buildx กับ compose มันไม่ลบ Docker ที่ติดตั้งไว้แล้ว
+    shell: |
+      set -euo pipefail
+      if command -v docker >/dev/null 2>&1; then
+        echo "Docker is already on PATH: $(command -v docker)"
+        docker --version || true
+        exit 0
+      fi
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y ca-certificates curl
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      . /etc/os-release
+      codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+      arch="$(dpkg --print-architecture)"
+      echo "deb [arch=${arch} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${codename} stable" > /etc/apt/sources.list.d/docker.list
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      systemctl enable --now docker || true
+      docker --version
+
+  - id: docker-group
+    title_en: Let your user run Docker
+    title_th: ให้ผู้ใช้รัน Docker ได้
+    privilege: root
+    optional: false
+    modes: [docker]
+    source: https://docs.docker.com/engine/install/linux-postinstall/
+    summary_en: >
+      Adds the desktop user to the docker group, which is Docker's post-install
+      step. A new login is required before an ordinary terminal can run docker
+      without sudo. Until you log out and back in, this wizard runs docker
+      through sudo. The docker group can control the Docker daemon, so it is
+      similar to administrator access on this PC.
+    summary_th: >
+      เพิ่มผู้ใช้เดสก์ท็อปเข้ากลุ่ม docker ตามขั้นตอนหลังติดตั้งของ Docker
+      ต้องออกจากระบบแล้วเข้าใหม่ เทอร์มินัลธรรมดาถึงจะรัน docker โดยไม่ใช้ sudo
+      ระหว่างนั้นตัวช่วยรัน docker ผ่าน sudo กลุ่ม docker ควบคุมดีมอน Docker ได้
+      จึงใกล้เคียงสิทธิ์ผู้ดูแลบนเครื่องนี้
+    shell: |
+      set -euo pipefail
+      target="${SUDO_USER:-$USER}"
+      if [ -z "$target" ] || [ "$target" = "root" ]; then
+        echo "Could not see the desktop user (SUDO_USER)." >&2
+        exit 1
+      fi
+      usermod -aG docker "$target"
+      echo "Added ${target} to group docker."
+      echo "Log out and back in before a new terminal can run docker without sudo."
+      id "$target"
+
+  - id: docker-pull
+    title_en: Pull the Hermes image
+    title_th: ดึงอิมเมจ Hermes
+    privilege: sudo-cache
+    optional: false
+    modes: [docker]
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/docker
+    command_hint: "docker pull nousresearch/hermes-agent:latest"
+    summary_en: >
+      docker pull nousresearch/hermes-agent:latest. The Docker guide's stable
+      tag is latest. The image does not include the Electron desktop app.
+    summary_th: >
+      docker pull nousresearch/hermes-agent:latest แท็ก stable ในคู่มือ Docker
+      คือ latest อิมเมจนี้ไม่มีแอป Electron
+    shell: |
+      set -euo pipefail
+      sudo -n docker pull nousresearch/hermes-agent:latest
+
+  - id: docker-gateway
+    title_en: Start the Hermes container
+    title_th: เริ่มคอนเทนเนอร์ Hermes
+    privilege: sudo-cache
+    optional: false
+    modes: [docker]
+    source: https://hermes-agent.nousresearch.com/docs/user-guide/docker
+    command_hint: "docker run -d --name hermes --restart unless-stopped -v ~/.hermes:/opt/data nousresearch/hermes-agent gateway run"
+    summary_en: >
+      Creates ~/.hermes and starts nousresearch/hermes-agent with that directory
+      mounted at /opt/data, which is the documented data volume. The container
+      name is hermes and the command is gateway run. PUID and PGID match your
+      user so the mount stays writable. Ports 8642 and 9119 are not published.
+      The guide's -p 8642:8642 would listen on every interface; chat bots do
+      not need it. Re-running starts the existing container instead of creating
+      a second one. The Update button recreates it.
+    summary_th: >
+      สร้าง ~/.hermes แล้วเริ่ม nousresearch/hermes-agent โดยเมานต์โฟลเดอร์นั้นที่
+      /opt/data ตามวอลุ่มในเอกสาร ชื่อคอนเทนเนอร์คือ hermes คำสั่งคือ gateway run
+      PUID และ PGID ตรงกับผู้ใช้ของคุณเพื่อให้เขียนวอลุ่มได้ ไม่เผยแพร่พอร์ต
+      8642 และ 9119 คำสั่ง -p 8642:8642 ในคู่มือจะฟังทุกอินเทอร์เฟซ แชทบอทไม่ต้องใช้
+      การรันซ้ำจะสตาร์ตคอนเทนเนอร์เดิม ไม่สร้างตัวที่สอง ปุ่มอัปเดตจะสร้างใหม่
+    shell: |
+      set -euo pipefail
+      home="${HOME}/.hermes"
+      mkdir -p "$home"
+      chmod 700 "$home"
+      uid="$(id -u)"
+      gid="$(id -g)"
+      if sudo -n docker ps -a --format '{{.Names}}' | grep -qx hermes; then
+        echo "Container hermes already exists. Starting it."
+        sudo -n docker start hermes
+      else
+        sudo -n docker run -d \
+          --name hermes \
+          --restart unless-stopped \
+          -e "PUID=${uid}" \
+          -e "PGID=${gid}" \
+          -v "${home}:/opt/data" \
+          nousresearch/hermes-agent gateway run
+      fi
+      sudo -n docker ps --filter name=^hermes$
